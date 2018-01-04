@@ -6,7 +6,7 @@ project(LMG_project LANGUAGES C CXX)
 if(MSVC)
   add_definitions("-D_USE_MATH_DEFINES")
 else()
-  add_compile_options(-std=c++11 -Wall)
+  add_compile_options(-std=c++11 -Wall -I ./SOIL/src -L ./SOIL/lib/libSOIL.a)
 endif()
 
 ##################################################################################
@@ -19,6 +19,8 @@ find_package( OpenGL REQUIRED )
 find_package( GLUT )
 #find_package( GLEW REQUIRED )
 find_package( GLEW )
+# SOIL
+find_library(SOIL SOIL lib/libSOIL.a)
 
 #OpenGL
 if(NOT ${OPENGL_FOUND})
@@ -50,6 +52,7 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/glm" )
 file( GLOB incList "${CMAKE_CURRENT_SOURCE_DIR}/*.h" )
 file( GLOB inlList "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp" )
 file( GLOB srcList "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" )
+file( GLOB SoilInc "${CMAKE_CURRENT_SOURCE_DIR}/SOIL/src/*.h" )
 
 # Group files in IDE (Visual Studio)
 source_group( "Include" FILES ${incList} )
@@ -57,6 +60,7 @@ source_group( "Inline" FILES ${inlList} )
 source_group( "Source" FILES ${srcList} )
 
 # Target program
+set( resList ${resList} ${SoilInc} )
 set( resList ${resList} ${incList} )
 set( resList ${resList} ${inlList} )
 add_executable( ${PROJECT_NAME} ${srcList} ${resList} )
@@ -77,8 +81,11 @@ else()
   #GLUT_LIBRARIES
 endif()
 
-if(NOT ${GLUT_FOUND})
+if(NOT ${GLEW_FOUND})
   target_link_libraries( ${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glew/lib/Release/x64/glew32.lib" )
 else()
   target_link_libraries( ${PROJECT_NAME} ${GLEW_LIBRARIES} )
 endif()
+
+target_link_libraries( ${PROJECT_NAME} ${SOIL} )
+#SOIL_LIBRARIES
