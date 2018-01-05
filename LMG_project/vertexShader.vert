@@ -18,7 +18,7 @@ uniform float time;
 // MAIN
 void main( void )
 {
-#if 1
+#if 0
     // Use animation
     float amplitude = 1.0;
     float frequency = 0.5;
@@ -26,7 +26,8 @@ void main( void )
     vec3 pos = vec3( position.x, position.y + height, position.z );
 	// Send position to Clip-space
 	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( pos, 1.0 );
-#else
+#endif
+#if 1
     // Send position to Clip-space
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( position, 1.0 );
 #endif

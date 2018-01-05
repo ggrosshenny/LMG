@@ -90,7 +90,7 @@ void Mesh::draw(Shader &shader)
         }
         else // If not
         {
-            std::cerr << "[WARNING]: the uniform " << name << i << " was not declared in the shader. It will not be used." << std::endl;
+            std::cerr << "[WARNING]: the uniform " << name << diffuseNr << " (or) " << specularNr << " was not declared in the shader. It will not be used." << std::endl;
         }
     }
 

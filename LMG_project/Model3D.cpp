@@ -58,7 +58,7 @@ unsigned int Model3D::textureFromFile(const std::string path, const std::string 
     }
     else
     {
-        std::cerr << "[WARNING] in Model3D, could not load texture at path : " << path << std::endl;
+        std::cerr << "[WARNING] in Model3D, could not load texture at path : " << fileName.c_str() << std::endl;
 
     }
 

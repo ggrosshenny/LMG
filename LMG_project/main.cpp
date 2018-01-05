@@ -45,6 +45,9 @@ float _cameraAspect;
 float _cameraZNear;
 float _cameraZFar;
 
+// Models
+std::vector<Model3D> models;
+
 // Mesh parameters
 glm::vec3 _meshColor;
 
@@ -370,11 +373,12 @@ void display( void )
 
     // Retrieve 3D model / scene parameters
     glm::mat4 modelMatrix;
-    const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
-    if ( useMeshAnimation )
-    {
-        modelMatrix = glm::rotate( modelMatrix, static_cast< float >( currentTime ) * 0.001f, glm::vec3( 0.0f, 1.f, 0.f ) );
-    }
+//    const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
+//    if ( useMeshAnimation )
+//    {
+//        modelMatrix = glm::rotate( modelMatrix, static_cast< float >( currentTime ) * 0.001f, glm::vec3( 0.0f, 1.f, 0.f ) );
+//    }
+    //modelMatrix = glm::rotate( modelMatrix, glm::vec4(1.0f, 0.0f, 1.f, 0.f ) );
 
     // Lighting
     // - normalMatrix
@@ -385,6 +389,8 @@ void display( void )
     lightColor = glm::vec3(1.0, 1.0, 1.0);
     // - lightPosition
     lightPosition = glm::vec3(1.0, 5.0, 0.0);
+    // Mesh color
+    _meshColor = glm::vec3( 0.f, 1.f, 0.f );
 
     // Camera
     // - view matrix
@@ -415,17 +421,13 @@ void display( void )
     //--------------------
     // Set GL state(s) (fixed pipeline)
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-    // - bind VAO as current vertex array (in OpenGL state machine)
-    glBindVertexArray( vertexArray );
-    // - draw command
-    glDrawElements(
-         GL_TRIANGLES,      // mode
-         numberOfIndices_,  // count
-         GL_UNSIGNED_INT,   // data type
-         (void*)0           // element array buffer offset
-    );
-    // - unbind VAO (0 is the default resource ID in OpenGL)
-    glBindVertexArray( 0 );
+
+    // Call draw method on each model
+    for(unsigned int i=0; i<models.size(); i++)
+    {
+        models[i].draw(shaderProgram);
+    }
+
     // Reset GL state(s) (fixed pipeline)
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
@@ -487,10 +489,8 @@ int main( int argc, char** argv )
     // Build shader
     shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
 
-    // Load object
-    Model3D falconModel((pathToSrc + "Models/Falcon/millenium-falcon.obj"));
-
-    falconModel.draw(shaderProgram);
+    // Load objects
+    models.push_back(Model3D((pathToSrc + "Models/Falcon/millenium-falcon.obj")));
 
 
     // Callbacks
