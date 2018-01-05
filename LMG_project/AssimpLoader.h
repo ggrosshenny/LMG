@@ -9,10 +9,17 @@
 // Assimp
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
-#include<assimp/vector3.h>
-#include<assimp/postprocess.h>
-#include<assimp/DefaultLogger.hpp>
-#include<assimp/LogStream.hpp>
+#include <assimp/vector3.h>
+#include <assimp/postprocess.h>
+#include <assimp/DefaultLogger.hpp>
+#include <assimp/LogStream.hpp>
+
+
+class AssimpLoader
+{
+private:
+
+};
 
 
 /* TODO :

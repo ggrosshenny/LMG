@@ -21,6 +21,8 @@ find_package( GLUT )
 find_package( GLEW )
 # SOIL
 find_library(SOIL SOIL lib/libSOIL.a)
+# assimp
+find_library(ASSIMP assimp lib/assimp-3.1.1/include/)
 
 #OpenGL
 if(NOT ${OPENGL_FOUND})
@@ -88,4 +90,8 @@ else()
 endif()
 
 target_link_libraries( ${PROJECT_NAME} ${SOIL} )
+
+target_link_libraries( ${PROJECT_NAME} ${ASSIMP})
+
+
 #SOIL_LIBRARIES

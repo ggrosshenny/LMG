@@ -5,6 +5,7 @@
 
 
 #include "Shader.h"
+#include "Model3D.h"
 
 /******************************************************************************
  ****************************** NAMESPACE SECTION *****************************
@@ -485,6 +486,12 @@ int main( int argc, char** argv )
 
     // Build shader
     shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
+
+    // Load object
+    Model3D falconModel((pathToSrc + "Models/Falcon/millenium-falcon.obj"));
+
+    falconModel.draw(shaderProgram);
+
 
     // Callbacks
     // - callback called when displaying window (user custom fonction pointer: "void f( void )")
