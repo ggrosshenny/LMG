@@ -3,29 +3,8 @@
  ******************************* INCLUDE SECTION ******************************
  ******************************************************************************/
 
-// STL
-#include <iostream>
-#include <vector>
-#include <fstream>
 
-// System
-#include <cstdio>
-
-// Graphics
-// - GLEW (always before "gl.h")
-#include <GL/glew.h>
-// - GL
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#include <GL/gl.h>
-// - GLUT
-#include <GL/glut.h>
-
-// glm
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "Shader.h"
 
 /******************************************************************************
  ****************************** NAMESPACE SECTION *****************************
@@ -44,12 +23,15 @@ GLuint indexBuffer;
 // VAO (vertex array object) : used to encapsulate several VBO
 GLuint vertexArray;
 
+// Path to sources
+std::string pathToSrc = "../LMG_project/";
+
 // Mesh
 int numberOfVertices_;
 int numberOfIndices_;
 
 // Shader program
-GLuint shaderProgram;
+Shader shaderProgram;
 
 // Camera parameters
 // - view
@@ -196,7 +178,7 @@ bool initialize()
     {
         statusOK = checkExtensions();
     }
-
+/*
     if ( statusOK )
     {
         statusOK = initializeArrayBuffer();
@@ -211,7 +193,7 @@ bool initialize()
     {
         statusOK = initializeShaderProgram();
     }
-
+*/
     initializeCamera();
 
     return statusOK;
@@ -352,135 +334,13 @@ bool initializeVertexArray()
     return statusOK;
 }
 
-/******************************************************************************
- * Initialize shader program
- ******************************************************************************/
-bool initializeShaderProgram()
-{
-    bool statusOK = true;
-
-    std::cout << "Initialize shader program..." << std::endl;
-
-    shaderProgram = glCreateProgram();
-
-    GLuint vertexShader = glCreateShader( GL_VERTEX_SHADER );
-    GLuint fragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
-
-    // Vertex shader
-    const char* vertexShaderSource[] = {
-//	    "#version 330 core                             \n"
-        "#version 130                                  \n"
-        "                                              \n"
-        " // INPUT                                     \n"
-        " in vec3 position;                            \n"
-        "                                              \n"
-        " // UNIFORM                                   \n"
-        " // - camera                                  \n"
-        " uniform mat4 viewMatrix;                     \n"
-        " uniform mat4 projectionMatrix;               \n"
-        " // - 3D model                                \n"
-        " uniform mat4 modelMatrix;                    \n"
-        " // - animation                               \n"
-        " uniform float time;                          \n"
-    " // - Lighting                                \n"
-    " uniform mat3 normalMatrix; // normal transformation  \n"
-    " uniform vec3 kd; // Material                 \n"
-        "                                              \n"
-        " // OUTPUT                                    \n"
-        "                                              \n"
-        " // MAIN                                      \n"
-        "void main( void )                             \n"
-        "{                                             \n"
-        "#if 1                                                                                  \n"
-        "    // Use animation                                                                   \n"
-        "    float amplitude = 1.0;                                                             \n"
-        "    float frequency = 0.5;                                                             \n"
-        "    float height = amplitude * sin( 2.0 * 3.141592 * frequency * ( time * 0.001 ) );   \n"
-        "    vec3 pos = vec3( position.x, position.y + height, position.z );                    \n"
-        "    // Send position to Clip-space                                                     \n"
-        "    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( pos, 1.0 );      \n"
-        "#else                                                                                  \n"
-        "    // Send position to Clip-space                                                     \n"
-        "    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( position, 1.0 ); \n"
-        "#endif                                                                                 \n"
-        "}                                                                                      \n"
-    };
-
-    // Fragment shader
-    const char* fragmentShaderSource[] = {
-        "#version 130                                  \n"
-        "                                              \n"
-        " // INPUT                                     \n"
-        "                                              \n"
-        " // UNIFORM                                   \n"
-        " uniform vec3 meshColor;                      \n"
-        "                                              \n"
-        " // OUTPUT                                    \n"
-        " out vec4 fragmentColor;                      \n"
-        "                                              \n"
-        " // MAIN                                      \n"
-        "void main( void )                             \n"
-        "{                                             \n"
-        "    fragmentColor = vec4( meshColor, 1.0 );   \n"
-        "}                                             \n"
-    };
-
-    // Load shader source
-#if 1
-    // Load from string
-    glShaderSource( vertexShader, 1, vertexShaderSource, nullptr );
-    glShaderSource( fragmentShader, 1, fragmentShaderSource, nullptr );
-#else
-    // TEST
-    // Load from files
-    const std::string vertexShaderFilename = "vertexShader.vert";
-    std::string vertexShaderFileContent;
-    getFileContent( vertexShaderFilename, vertexShaderFileContent );
-    const char* sourceCode = vertexShaderFileContent.c_str();
-    glShaderSource( vertexShader, 1, &sourceCode, nullptr );
-    glShaderSource( fragmentShader, 1, fragmentShaderSource, nullptr );
-#endif
-
-    glCompileShader( vertexShader );
-    glCompileShader( fragmentShader );
-
-    GLint compileStatus;
-    glGetShaderiv( vertexShader, GL_COMPILE_STATUS, &compileStatus );
-    if ( compileStatus == GL_FALSE )
-    {
-        std::cout << "Error: vertex shader "<< std::endl;
-
-        GLint logInfoLength = 0;
-        glGetShaderiv( vertexShader, GL_INFO_LOG_LENGTH, &logInfoLength );
-        if ( logInfoLength > 0 )
-        {
-            GLchar* infoLog = new GLchar[ logInfoLength ];
-            GLsizei length = 0;
-            glGetShaderInfoLog( vertexShader, logInfoLength, &length, infoLog );
-            std::cout << infoLog << std::endl;
-        }
-    }
-
-    glGetShaderiv( fragmentShader, GL_COMPILE_STATUS, &compileStatus );
-    if ( compileStatus == GL_FALSE )
-    {
-        std::cout << "Error: fragment shader "<< std::endl;
-    }
-
-    glAttachShader( shaderProgram, vertexShader );
-    glAttachShader( shaderProgram, fragmentShader );
-
-    glLinkProgram( shaderProgram );
-
-    return statusOK;
-}
 
 /******************************************************************************
  * Callback to display the scene
  ******************************************************************************/
 void display( void )
 {
-  glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
     // Timer info
     const int currentTime = glutGet( GLUT_ELAPSED_TIME );
 
@@ -497,15 +357,16 @@ void display( void )
     //--------------------
     // Activate shader program
     //--------------------
-    glUseProgram( shaderProgram );
+    shaderProgram.use();
+
 
     //--------------------
     // Send uniforms to GPU
     //--------------------
-    GLint uniformLocation;
     // Retrieve camera parameters
     const glm::mat4 viewMatrix = glm::lookAt( _cameraEye, _cameraCenter, _cameraUp );
     const glm::mat4 projectionMatrix = glm::perspective( _cameraFovY, _cameraAspect, _cameraZNear, _cameraZFar );
+
     // Retrieve 3D model / scene parameters
     glm::mat4 modelMatrix;
     const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
@@ -513,73 +374,40 @@ void display( void )
     {
         modelMatrix = glm::rotate( modelMatrix, static_cast< float >( currentTime ) * 0.001f, glm::vec3( 0.0f, 1.f, 0.f ) );
     }
-  // Lighting
-  // - normalMatrix
-  normalMatrix = glm::transpose(glm::inverse(viewMatrix*modelMatrix));
-  // - Material
-  kd = glm::vec3(1.0, 0.0, 0.0);
-  // - lightColor
-  lightColor = glm::vec3(1.0, 1.0, 1.0);
-  // - lightPosition
-  lightPosition = glm::vec3(1.0, 5.0, 0.0);
+
+    // Lighting
+    // - normalMatrix
+    normalMatrix = glm::transpose(glm::inverse(viewMatrix*modelMatrix));
+    // - Material
+    kd = glm::vec3(1.0, 0.0, 0.0);
+    // - lightColor
+    lightColor = glm::vec3(1.0, 1.0, 1.0);
+    // - lightPosition
+    lightPosition = glm::vec3(1.0, 5.0, 0.0);
+
     // Camera
     // - view matrix
-    uniformLocation = glGetUniformLocation( shaderProgram, "viewMatrix" );
-    if ( uniformLocation >= 0 )
-    {
-        glUniformMatrix4fv( uniformLocation, 1, GL_FALSE, glm::value_ptr( viewMatrix ) );
-    }
+    shaderProgram.setMat4("viewMatrix", viewMatrix);
     // - projection matrix
-    uniformLocation = glGetUniformLocation( shaderProgram, "projectionMatrix" );
-    if ( uniformLocation >= 0 )
-    {
-        glUniformMatrix4fv( uniformLocation, 1, GL_FALSE, glm::value_ptr( projectionMatrix ) );
-    }
+    shaderProgram.setMat4("projectionMatrix", projectionMatrix);
+
     // Mesh
     // - model matrix
-    uniformLocation = glGetUniformLocation( shaderProgram, "modelMatrix" );
-    if ( uniformLocation >= 0 )
-    {
-        glUniformMatrix4fv( uniformLocation, 1, GL_FALSE, glm::value_ptr( modelMatrix ) );
-    }
+    shaderProgram.setMat4("modelMatrix", modelMatrix);
     // - mesh color
-    uniformLocation = glGetUniformLocation( shaderProgram, "meshColor" );
-    if ( uniformLocation >= 0 )
-    {
-        glUniform3fv( uniformLocation, 1, glm::value_ptr( _meshColor ) );
-    }
+    shaderProgram.setVec3("meshColor", _meshColor);
     // Animation
-    uniformLocation = glGetUniformLocation( shaderProgram, "time" );
-    if ( uniformLocation >= 0 )
-    {
-        glUniform1f( uniformLocation, static_cast< float >( currentTime ) );
-    }
-  // Lighting
-  // - normalMatrix
-  uniformLocation = glGetUniformLocation( shaderProgram, "normalMatrix" );
-  if ( uniformLocation >= 0 )
-  {
-    glUniformMatrix3fv( uniformLocation, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
-  }
-  // - Material
-  uniformLocation = glGetUniformLocation( shaderProgram, "kd" );
-  if ( uniformLocation >= 0 )
-  {
-    glUniform3fv( uniformLocation, 1, glm::value_ptr( kd ) );
-  }
-  // - lightPosition
-  uniformLocation = glGetUniformLocation( shaderProgram, "lightPosition" );
-  if ( uniformLocation >= 0 )
-  {
-    glUniform3fv( uniformLocation, 1, glm::value_ptr( lightPosition ) );
-  }
-  // - lightColor
-  uniformLocation = glGetUniformLocation( shaderProgram, "lightColor" );
-  if ( uniformLocation >= 0 )
-  {
-    glUniform3fv( uniformLocation, 1, glm::value_ptr( lightColor ) );
-  }
+    shaderProgram.setFloat("time", static_cast< float >( currentTime ) );
 
+    // Lighting
+    // - normalMatrix
+    shaderProgram.setMat3("normalMatrix", normalMatrix);
+    // - Material
+    shaderProgram.setVec3("kd", kd);
+    // - lightPosition
+    shaderProgram.setVec3("lightPosition", lightPosition);
+    // - lightColor
+    shaderProgram.setVec3("lightColor", lightColor);
 
     //--------------------
     // Render scene
@@ -626,7 +454,7 @@ void idle( void )
  ******************************************************************************/
 int main( int argc, char** argv )
 {
-    std::cout << "TP3 - Transform" << std::endl;
+    std::cout << "LMG Project" << std::endl;
 
     // Initialize the GLUT library
     glutInit( &argc, argv );
@@ -642,13 +470,7 @@ int main( int argc, char** argv )
     glutInitWindowSize( 640, 480 );
     glutInitWindowPosition( 50, 50 );
     // - create the window
-    glutCreateWindow( "TP3 - Transform" );
-
-    // Callbacks
-    // - callback called when displaying window (user custom fonction pointer: "void f( void )")
-    glutDisplayFunc( display );
-    // - callback continuously called when events are not being received
-    glutIdleFunc( idle );
+    glutCreateWindow( "Projet LMG" );
 
     // Initialize the GLEW library
     // - mandatory to be able to use OpenGL extensions,
@@ -660,6 +482,17 @@ int main( int argc, char** argv )
         fprintf( stderr, "Error: %s\n", glewGetErrorString( error ) );
         exit( -1 );
     }
+
+    // Build shader
+    shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
+
+    // Callbacks
+    // - callback called when displaying window (user custom fonction pointer: "void f( void )")
+    glutDisplayFunc( display );
+    // - callback continuously called when events are not being received
+    glutIdleFunc( idle );
+
+
 
     // Initialize all your resources (graphics, data, etc...)
     initialize();
