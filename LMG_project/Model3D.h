@@ -27,9 +27,12 @@ class Model3D
 // Attributes
 private:
     /// List of meshes
-    std::vector<Mesh> meshes;
     std::string directory;
     std::map<std::string, Texture, classComp> loadedTextures;
+    bool WarningMessageForShaderAlreadyShown;
+
+public:
+    std::vector<Mesh> meshes;
 
 
 // Constructor

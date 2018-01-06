@@ -3,32 +3,38 @@
 
 // INPUT
 in vec3 position;
+in vec3 normal;
+in vec2 textCoords;
 
 // UNIFORM
-// - camera
+  // - camera
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
-// - 3D model
+  // - 3D model
 uniform mat4 modelMatrix;
-// - animation
-uniform float time;
+  // Lightning
+uniform mat3 normalMatrix;
+  // - animation
+//uniform float time;
+
 
 // OUTPUT
+out vec2 textureCoordinates;
+out vec3 FragPos;
+out vec3 NormalInWorldSpace;
 
 // MAIN
 void main( void )
 {
-#if 0
-    // Use animation
-    float amplitude = 1.0;
-    float frequency = 0.5;
-    float height = amplitude * sin( 2.0 * 3.141592 * frequency * ( time * 0.001 ) );
-    vec3 pos = vec3( position.x, position.y + height, position.z );
-	// Send position to Clip-space
-	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( pos, 1.0 );
-#endif
-#if 1
     // Send position to Clip-space
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( position, 1.0 );
-#endif
+    
+    // Compute normal position in world space
+    NormalInWorldSpace = normalMatrix * normal;
+    
+    // Compute fragment position in world space
+    FragPos = vec3(modelMatrix * vec4(position, 1.0));
+
+    // Send texture coordinates to the fragment shader
+    textureCoordinates = textCoords;
 }

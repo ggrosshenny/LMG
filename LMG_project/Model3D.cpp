@@ -6,6 +6,7 @@
 
 Model3D::Model3D(std::string path)
 {
+    this->WarningMessageForShaderAlreadyShown = false;
     this->loadModel(path);
 }
 
@@ -18,7 +19,7 @@ void Model3D::draw(Shader &shader)
 {
     for(unsigned int i = 0; i<this->meshes.size(); i++)
     {
-        this->meshes[i].draw(shader);
+        this->WarningMessageForShaderAlreadyShown = this->meshes[i].draw(shader, this->WarningMessageForShaderAlreadyShown);
     }
 }
 
@@ -28,7 +29,7 @@ unsigned int Model3D::textureFromFile(const std::string path, const std::string 
     // Get full path of the texture
     std::string fileName = std::string(path);
     fileName = directory + '/' + fileName;
-    std::cout << "textureFromFile : " << fileName << std::endl;
+    //std::cout << "textureFromFile : " << fileName << std::endl;
     // Texture ID in OpenGL environment
     GLuint textureID;
     // Texture's data
@@ -42,6 +43,7 @@ unsigned int Model3D::textureFromFile(const std::string path, const std::string 
 
     // Retrieve texture data
     textureData = SOIL_load_image(fileName.c_str(), &width, &height, 0, SOIL_LOAD_RGBA);
+    //std::cerr << "SOIL_LOADING error : " << SOIL_last_result() << std::endl;
 
     if(textureData != NULL)
     {
@@ -76,7 +78,8 @@ void Model3D::loadModel(std::string path)
     Assimp::Importer import;
 
     // Load the model
-    const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+    const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
+
 
     // Check loaded model validity
     if((scene == NULL) || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !scene->mRootNode)
@@ -129,7 +132,7 @@ Mesh Model3D::processMesh(aiMesh *mesh, const aiScene *scene)
     std::vector<Texture> diffuseMaps;
     std::vector<Texture> specularMaps;
 
-    // Retrieve vertieces data
+    // Retrieve vertices data
     for(unsigned int i=0; i<mesh->mNumVertices; i++)
     {
         // Retrieve vertex position

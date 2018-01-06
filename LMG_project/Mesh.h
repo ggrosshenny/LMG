@@ -3,6 +3,8 @@
 
 // Includes
 
+#include "ErroHandling.h"
+
 // STL
 #include <iostream>
 #include <vector>
@@ -67,9 +69,11 @@ class Mesh
 {
 // Attributes
 private:
-    GLuint VAO;
     GLuint VBO;
     GLuint EBO;
+
+public:
+    GLuint VAO;
 
 public:
     /// Vector of vertices
@@ -101,6 +105,14 @@ public:
      * @param shader shader object containing vertex and fragment shaders
      */
     void draw(Shader& shader);
+
+
+    /**
+     * @brief drawdraw the current mesh with the given shader by passing informations in the uniform of the shader
+     * @param shader shader object containing vertex and fragment shaders
+     * @param messageAlreadySpread bool to know if we have to spread the error message
+     */
+    bool draw(Shader& shader, bool messageAlreadySpread);
 
 
 // Auxiliary methods

@@ -6,6 +6,28 @@
 
 #include "Shader.h"
 #include "Model3D.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
+
+// TEST
+
+//float vertices[] = {
+//    0.0f, 0.5f, 0.0f, 0.0, 0.0, 1.0,
+//    0.5f, -0.5f, 0.0f, 1.0, 0.0, 0.0,
+//    -0.5f, -0.5f, 0.0f, 0.0, 1.0, 0.0
+//};
+
+struct vertex2
+{
+    glm::vec3 position;
+    glm::vec3 color;
+};
+
+std::vector<vertex2> vertices;
+
+std::vector<unsigned int> indices = {
+    3, 1, 2
+};
 
 /******************************************************************************
  ****************************** NAMESPACE SECTION *****************************
@@ -210,11 +232,11 @@ void initializeCamera()
 {
     // User parameters
     // - view
-    _cameraEye = glm::vec3( 0.f, 2.f, 3.f );
+    _cameraEye = glm::vec3( 0.f, 2.f, 4.f );
     _cameraCenter = glm::vec3( 0.f, 0.f, 0.f );
     _cameraUp = glm::vec3( 0.f, 1.f, 0.f );
     // - projection
-    _cameraFovY = 45.f;
+    _cameraFovY = 1.f;
     _cameraAspect = 1.f;
     _cameraZNear = 0.1f;
     _cameraZFar = 100.f;
@@ -367,12 +389,17 @@ void display( void )
     //--------------------
     // Send uniforms to GPU
     //--------------------
+
     // Retrieve camera parameters
     const glm::mat4 viewMatrix = glm::lookAt( _cameraEye, _cameraCenter, _cameraUp );
     const glm::mat4 projectionMatrix = glm::perspective( _cameraFovY, _cameraAspect, _cameraZNear, _cameraZFar );
 
     // Retrieve 3D model / scene parameters
     glm::mat4 modelMatrix;
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 0.5f, 0.5f));
+    modelMatrix = glm::rotate(modelMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, -12.0f, 0.0f));
+    //glm::mat4 modelMatrix = glm::rotate(135.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 //    const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
 //    if ( useMeshAnimation )
 //    {
@@ -397,6 +424,8 @@ void display( void )
     shaderProgram.setMat4("viewMatrix", viewMatrix);
     // - projection matrix
     shaderProgram.setMat4("projectionMatrix", projectionMatrix);
+    // - viewPosition
+    shaderProgram.setVec3("viewPos", _cameraCenter);
 
     // Mesh
     // - model matrix
@@ -420,16 +449,23 @@ void display( void )
     // Render scene
     //--------------------
     // Set GL state(s) (fixed pipeline)
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
     // Call draw method on each model
+
+
     for(unsigned int i=0; i<models.size(); i++)
     {
         models[i].draw(shaderProgram);
     }
 
+//    glBindVertexArray(vertexArray);
+//    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)0);
+//    glCheckError();
+//    glBindVertexArray(0);
+
     // Reset GL state(s) (fixed pipeline)
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
     // Deactivate current shader program
     glUseProgram( 0 );
@@ -475,6 +511,12 @@ int main( int argc, char** argv )
     // - create the window
     glutCreateWindow( "Projet LMG" );
 
+    // Callbacks
+    // - callback called when displaying window (user custom fonction pointer: "void f( void )")
+    glutDisplayFunc( display );
+    // - callback continuously called when events are not being received
+    glutIdleFunc( idle );
+
     // Initialize the GLEW library
     // - mandatory to be able to use OpenGL extensions,
     //   because OpenGL core API is made of OpenGL 1 and other functions are null pointers (=> segmentation fault !)
@@ -486,23 +528,85 @@ int main( int argc, char** argv )
         exit( -1 );
     }
 
+    // Initialize all your resources (graphics, data, etc...)
+    checkExtensions();
+
     // Build shader
     shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
 
+        // TEST
+
+
+    //float vertices[] = {
+    //    0.0f, 0.5f, 0.0f, 1.0, 1.0, 1.0,
+    //    0.5f, -0.5f, 0.0f, 1.0, 1.0, 1.0,
+    //    -0.5f, -0.5f, 0.0f, 1.0, 1.0, 1.0
+
+    vertex2 newVertex;
+    newVertex.position = glm::vec3(0.0f, 0.5f, 0.0f);
+    newVertex.color = glm::vec3(0.0f, 0.0f, 1.0f);
+    vertices.push_back(newVertex);
+     vertex2 newVertex2;
+    newVertex2.position = glm::vec3(0.5f, -0.5f, 0.0f);
+    newVertex2.color = glm::vec3(1.0f, 0.0f, 0.0f);
+    vertices.push_back(newVertex2);
+     vertex2 newVertex3;
+    newVertex3.position = glm::vec3(-0.5f, -0.5f, 0.0f);
+    newVertex3.color = glm::vec3(0.0f, 1.0f, 0.0f);
+    vertices.push_back(newVertex3);
+
+
     // Load objects
-    models.push_back(Model3D((pathToSrc + "Models/Falcon/millenium-falcon.obj")));
+            // "Models/Crate/Crate1.obj"
+            // "Models/Falcon/millenium-falcon.obj"
+            // "Models/NanoSuit/nanosuit.obj" -> Works !
+            // "Models/StarWars/test_obj/Arc170.obj"
+    models.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
+
+//    glGenVertexArrays(1, &vertexArray);
+//    glCheckError();
+//    glGenBuffers(1, &positionBuffer);
+//    glCheckError();
+//    glGenBuffers(1, &indexBuffer);
+//    glCheckError();
+
+//    glBindVertexArray(vertexArray);
+//    glCheckError();
+
+//    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+//    glCheckError();
+//    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertex2) /*sizeof(vertices)*/, vertices.data(), GL_STATIC_DRAW);
+//    glCheckError();
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+//    glCheckError();
+//    glBufferData(GL_ELEMENT_ARRAY_BUFFER,indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+//    glCheckError();
+
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, /*6*sizeof(float)*/ sizeof(vertex2), (void*)0);
+//    glCheckError();
+//    glEnableVertexAttribArray(0);
+//    glCheckError();
+
+//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, /*6*sizeof(float)*/ sizeof(vertex2), /*(void*)(3*sizeof(float))*/ (void*)(offsetof(vertex2, color)));
+//    glCheckError();
+//    glEnableVertexAttribArray(1);
+//    glCheckError();
+
+//    glBindVertexArray(0);
+//    glCheckError();
 
 
-    // Callbacks
-    // - callback called when displaying window (user custom fonction pointer: "void f( void )")
-    glutDisplayFunc( display );
-    // - callback continuously called when events are not being received
-    glutIdleFunc( idle );
+
+//    std::cout << "size of indices : " << sizeof(indices) << std::endl;
+//    std::cout << "Size of Vertex struct : " << sizeof(Vertex) << std::endl;
+//    std::cout << "\tSize of position : " << sizeof(Vertex::position) << std::endl;
+//    std::cout << "\tSize of normals : " << sizeof(Vertex::normal) << std::endl;
+//    std::cout << "\tSize of texture coordinats : " << sizeof(Vertex::textCoords) << std::endl;
+//    std::cout << "Begin of normals :" << (((void*)offsetof(Vertex, Vertex::normal)) == ((void*)sizeof(Vertex::position))) << std::endl;
+//    std::cout << "Begin of texture :" << (void*)offsetof(Vertex, Vertex::textCoords) << std::endl;
 
 
-
-    // Initialize all your resources (graphics, data, etc...)
-    initialize();
+    initializeCamera();
 
     // Enter the GLUT main event loop (waiting for events: keyboard, mouse, refresh screen, etc...)
     glutMainLoop();
