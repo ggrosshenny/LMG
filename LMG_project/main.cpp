@@ -6,28 +6,10 @@
 
 #include "Shader.h"
 #include "Model3D.h"
+#include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
-// TEST
-
-//float vertices[] = {
-//    0.0f, 0.5f, 0.0f, 0.0, 0.0, 1.0,
-//    0.5f, -0.5f, 0.0f, 1.0, 0.0, 0.0,
-//    -0.5f, -0.5f, 0.0f, 0.0, 1.0, 0.0
-//};
-
-struct vertex2
-{
-    glm::vec3 position;
-    glm::vec3 color;
-};
-
-std::vector<vertex2> vertices;
-
-std::vector<unsigned int> indices = {
-    3, 1, 2
-};
 
 /******************************************************************************
  ****************************** NAMESPACE SECTION *****************************
@@ -37,35 +19,26 @@ std::vector<unsigned int> indices = {
  ************************* DEFINE AND CONSTANT SECTION ************************
  ******************************************************************************/
 
-// VBO (vertex buffer object) : used to store positions coordinates at each point
-GLuint positionBuffer;
-// VBO (vertex buffer object) : used to store normales at each point
-GLuint normalBuffer;
-// VBO (vertex buffer object) : used to store positions index
-GLuint indexBuffer;
-// VAO (vertex array object) : used to encapsulate several VBO
-GLuint vertexArray;
+// Screen properties
+int SCR_WIDTH = 800;
+int SCR_HEIGHT = 648;
+
+// Mouse position catching
+bool firstTimeMousePositionCaught = true;
+int lastMousePositionX = 0.0f;
+int lastMousePositionY = 0.0f;
+
+
 
 // Path to sources
 std::string pathToSrc = "../LMG_project/";
 
-// Mesh
-int numberOfVertices_;
-int numberOfIndices_;
-
 // Shader program
 Shader shaderProgram;
 
-// Camera parameters
-// - view
-glm::vec3 _cameraEye;
-glm::vec3 _cameraCenter;
-glm::vec3 _cameraUp;
-// - projection
-float _cameraFovY;
-float _cameraAspect;
-float _cameraZNear;
-float _cameraZFar;
+// Camera object
+Camera camera(glm::vec3( 0.f, 2.f, 4.f ), glm::vec3( 0.f, 1.f, 0.f ));
+
 
 // Models
 std::vector<Model3D> models;
@@ -78,6 +51,11 @@ glm::mat3 normalMatrix;
 glm::vec3 lightPosition;
 glm::vec3 lightColor;
 glm::vec3 kd;
+
+// Animation parameters
+float deltaTime = 0.0f;
+float currentFrameTime = 0.0f;
+float lastFrameTime = 0.0f;
 
 /******************************************************************************
  ***************************** TYPE DEFINITION ********************************
@@ -93,103 +71,11 @@ glm::vec3 kd;
 
 bool initialize();
 bool checkExtensions();
-bool initializeArrayBuffer();
-bool initializeVertexArray();
-bool initializeShaderProgram();
-void initializeCamera();
 bool finalize();
+void mousePressedEvent(int button, int state, int x, int y);
+void mousePassiveEvent(int mousePositionX, int mousePositionY);
+void keyPressedEvent(unsigned char key, int x, int y);
 
-/******************************************************************************
- * Procdural mesh
- ******************************************************************************/
-void waves( std::vector< glm::vec3 >& points, std::vector< glm::vec3 >& normals, std::vector< GLuint >& triangleIndices, int nb )
-{
-    // Position and normal arrays
-    points.resize( nb * nb );
-    normals.resize( nb * nb );
-    for ( int j = 0; j < nb; ++j )
-    {
-        for ( int i = 0; i < nb; ++i )
-        {
-            // Current data index
-            const int k = j * nb + i;
-
-            // Current position
-            float x = 6.0f / nb * j - 3.000001f;
-            float y = 6.0f / nb * i - 3.000001f;
-
-            // Position
-            // analytic function: sinus (with altitude attenuation)
-            // - altitude (use polar coordinates)
-            const float r = std::sqrt( x * x + y * y );
-//          const float h = 0.4f*std::sin(M_PI/2.0+r*7);
-            const float h = 0.4f * ( 1 - r / 5 ) * std::sin( glm::pi< float >() / 2.0 + r * 5 );
-            // - store position
-//          points[ k ] = { x, y, h };
-            points[ k ] = { x, h, y };
-
-            // Normal
-            // - derivative of analytic function (use polar coordinates)
-            //const float dh = 7*0.4f*std::cos(M_PI/2.0+r*7);
-            const float dh = -0.4 / 5 * std::sin( glm::pi< float >() / 2.0 + r * 5 ) + 0.4f * ( 1 - r / 5 ) * 5 * std::cos( glm::pi< float >() / 2.0 + r * 5 );
-            // - derivative is the tangent, need to retrieve normal from tangent (easy in 2D)
-            const glm::vec3 n = { -x / r * dh, -y / r * dh, 1 };
-            // - store normal
-            normals[ k ]= glm::normalize( n );
-        }
-    }
-
-    // Index array
-    triangleIndices.reserve( 6 * ( nb - 1 ) * ( nb - 1 ) );
-    for ( int j = 1; j < nb; ++j )
-        for ( int i = 1; i < nb; ++i )
-        {
-            // Current data index
-            const int k = j * nb + i;
-            // triangle
-            triangleIndices.push_back( k );
-            triangleIndices.push_back( k - nb );
-            triangleIndices.push_back( k - nb - 1 );
-            // triangle
-            triangleIndices.push_back( k );
-            triangleIndices.push_back( k - nb - 1 );
-            triangleIndices.push_back( k - 1 );
-        }
-}
-
-/******************************************************************************
- * Helper function used to load shader source code from files
- *
- * @param pFilename ...
- *
- * @return ...
- ******************************************************************************/
-bool getFileContent( const std::string& pFilename, std::string& pFileContent )
-{
-    std::ifstream file( pFilename.c_str(), std::ios::in );
-    if ( file )
-    {
-        // Initialize a string to store file content
-        file.seekg( 0, std::ios::end );
-        pFileContent.resize( file.tellg() );
-        file.seekg( 0, std::ios::beg );
-
-        // Read file content
-        file.read( &pFileContent[ 0 ], pFileContent.size() );
-
-        // Close file
-        file.close();
-
-        return true;
-    }
-    else
-    {
-        // LOG
-        // ...
-    }
-
-    return false;
-}
 
 /******************************************************************************
  * Initialize all
@@ -204,43 +90,10 @@ bool initialize()
     {
         statusOK = checkExtensions();
     }
-/*
-    if ( statusOK )
-    {
-        statusOK = initializeArrayBuffer();
-    }
-
-    if ( statusOK )
-    {
-        statusOK = initializeVertexArray();
-    }
-
-    if ( statusOK )
-    {
-        statusOK = initializeShaderProgram();
-    }
-*/
-    initializeCamera();
 
     return statusOK;
 }
 
-/******************************************************************************
- * Initialize the camera
- ******************************************************************************/
-void initializeCamera()
-{
-    // User parameters
-    // - view
-    _cameraEye = glm::vec3( 0.f, 2.f, 4.f );
-    _cameraCenter = glm::vec3( 0.f, 0.f, 0.f );
-    _cameraUp = glm::vec3( 0.f, 1.f, 0.f );
-    // - projection
-    _cameraFovY = 1.f;
-    _cameraAspect = 1.f;
-    _cameraZNear = 0.1f;
-    _cameraZFar = 100.f;
-}
 
 /******************************************************************************
  * Finalize all
@@ -266,98 +119,69 @@ bool checkExtensions()
     return statusOK;
 }
 
+
 /******************************************************************************
- * Initialize array buffer
+ * Callback to retrieve user's inputs
  ******************************************************************************/
-bool initializeArrayBuffer()
+
+
+void mousePressedEvent(int button, int state, int x, int y)
 {
-    bool statusOK = true;
 
-    std::cout << "Initialize array buffer..." << std::endl;
+    switch(button)
+    {
+        // Scroll up
+        case 3:
+            camera.processMouseScroll(y);
+            break;
 
-    // In this example, we want to display one triangle
+        case 4:
+            camera.processMouseScroll(y);
+            break;
 
-    // Buffer of positions on CPU (host)
-    std::vector< glm::vec3 > points;
-    std::vector< glm::vec3 > normals;
-    std::vector< GLuint > triangleIndices;
-    const int nb = 100;
-    waves( points, normals, triangleIndices, nb );
-    numberOfVertices_ = static_cast< int >( points.size() );
-    numberOfIndices_ = static_cast< int >( triangleIndices.size() );
-
-    // Position buffer
-    glGenBuffers( 1, &positionBuffer );
-    // buffer courant a manipuler
-    glBindBuffer( GL_ARRAY_BUFFER, positionBuffer );
-    // definit la taille du buffer et le remplit
-    glBufferData( GL_ARRAY_BUFFER, numberOfVertices_ * sizeof( glm::vec3 ), points.data(), GL_STATIC_DRAW );
-    // buffer courant : rien
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-
-    // Index buffer
-    // - this buffer is used to separate topology from positions: send points + send toplogy (triangle: 3 vertex indices)
-    glGenBuffers( 1, &indexBuffer );
-    // buffer courant a manipuler
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, indexBuffer );
-    // definit la taille du buffer et le remplit
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, numberOfIndices_ * sizeof( GLuint ), triangleIndices.data(), GL_STATIC_DRAW );
-    // buffer courant : rien
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-
-    // Normals buffer
-    glGenBuffers( 1, &normalBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
-    glBufferData(GL_ARRAY_BUFFER, numberOfVertices_ * sizeof( glm::vec3 ), normals.data(), GL_STATIC_DRAW);
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-
-    // Mesh parameter(s)
-    _meshColor = glm::vec3( 0.f, 1.f, 0.f );
-
-    return statusOK;
+        default:
+            break;
+    }
 }
 
-/******************************************************************************
- * Initialize vertex array
- ******************************************************************************/
-bool initializeVertexArray()
+void mousePassiveEvent(int mousePositionX, int mousePositionY)
 {
-    bool statusOK = true;
+    float xOffset = 0.0f;
+    float yOffset = 0.0f;
 
-    std::cout << "Initialize vertex array..." << std::endl;
+    if(firstTimeMousePositionCaught)
+    {
+        lastMousePositionX = mousePositionX;
+        lastMousePositionY = mousePositionY;
+        firstTimeMousePositionCaught = false;
+    }
 
-    // Create a vertex array to encapsulate all VBO
-    // - generate a VAO ID
-    glGenVertexArrays( 1, &vertexArray );
+    xOffset = lastMousePositionX - mousePositionX;
+    yOffset = mousePositionY - lastMousePositionY;
+    lastMousePositionX = mousePositionX;
+    lastMousePositionY = mousePositionY;
 
-    // - bind VAO as current vertex array (in OpenGL state machine)
-    glBindVertexArray( vertexArray );
-    // - bind VBO as current buffer (in OpenGL state machine)
-    glBindBuffer( GL_ARRAY_BUFFER, positionBuffer );
+    camera.processMouseMovement(xOffset, yOffset, true);
 
-    // - specify the location and data format of the array of generic vertex attributes at index​ to use when rendering
-    glVertexAttribPointer( 0/*index of the generic vertex attribute: VBO index (not its ID!)*/, 3/*nb elements in the attribute: (x,y,z)*/, GL_FLOAT/*type of data*/, GL_FALSE/*normalize data*/, 0/*stride*/, 0/*offset in memory*/ );
-    // - enable or disable a generic vertex attribute array
-    glEnableVertexAttribArray( 0/*index of the generic vertex attribute*/ );
-  glBindBuffer( GL_ARRAY_BUFFER, 0 );
+}
 
-  // - bind VBO as current buffer (in OpenGL state machine)
-    glBindBuffer( GL_ARRAY_BUFFER, normalBuffer);
-
-    // - specify the location and data format of the array of generic vertex attributes at index​ to use when rendering
-    glVertexAttribPointer( 1/*index of the generic vertex attribute: VBO index (not its ID!)*/, 3/*nb elements in the attribute: (x,y,z)*/, GL_FLOAT/*type of data*/, GL_FALSE/*normalize data*/, 0/*stride*/, 0/*offset in memory*/ );
-    // - enable or disable a generic vertex attribute array
-    glEnableVertexAttribArray( 1/*index of the generic vertex attribute*/ );
-
-    // Index buffer
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, indexBuffer );
-
-    // - unbind VAO (0 is the default resource ID in OpenGL)
-    glBindVertexArray( 0 );
-    // - unbind VBO (0 is the default resource ID in OpenGL)
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-
-    return statusOK;
+void keyPressedEvent(unsigned char key, int x, int y)
+{
+    switch(key)
+    {
+        case 'z' :
+            camera.processKeyboard(FORWARD, deltaTime);
+            break;
+        case 's' :
+            camera.processKeyboard(BACKWARD, deltaTime);
+            break;
+        case 'q' :
+            camera.processKeyboard(LEFT, deltaTime);
+            break;
+        case 'd' :
+            camera.processKeyboard(RIGHT, deltaTime);
+            break;
+    }
 }
 
 
@@ -368,7 +192,10 @@ void display( void )
 {
     glEnable(GL_DEPTH_TEST);
     // Timer info
-    const int currentTime = glutGet( GLUT_ELAPSED_TIME );
+    currentFrameTime = static_cast<float>(glutGet( GLUT_ELAPSED_TIME ));
+    // Get delta time
+    deltaTime = currentFrameTime - lastFrameTime;
+    lastFrameTime = currentFrameTime;
 
     //--------------------
     // START frame
@@ -391,21 +218,40 @@ void display( void )
     //--------------------
 
     // Retrieve camera parameters
-    const glm::mat4 viewMatrix = glm::lookAt( _cameraEye, _cameraCenter, _cameraUp );
-    const glm::mat4 projectionMatrix = glm::perspective( _cameraFovY, _cameraAspect, _cameraZNear, _cameraZFar );
+    const glm::mat4 viewMatrix = camera.getViewMatrix();
+    const glm::mat4 projectionMatrix = glm::perspective( glm::radians(45.0f), static_cast<float>(SCR_WIDTH/SCR_HEIGHT), 0.1f, 100.0f );
 
     // Retrieve 3D model / scene parameters
+    glm::mat4 SceneTransformationMatrix;
+    SceneTransformationMatrix = glm::scale(SceneTransformationMatrix, glm::vec3(0.5f, 0.5f, 0.5f));
+    SceneTransformationMatrix = glm::rotate(SceneTransformationMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    SceneTransformationMatrix = glm::translate(SceneTransformationMatrix, glm::vec3(0.0f, -12.5f, 10.0f));
+
+
+//    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+//    modelMatrix = glm::rotate(modelMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+//    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // Create the local transformation matrix for first model
     glm::mat4 modelMatrix;
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 0.5f, 0.5f));
-    modelMatrix = glm::rotate(modelMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, -12.0f, 0.0f));
-    //glm::mat4 modelMatrix = glm::rotate(135.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+    modelMatrix = glm::rotate(modelMatrix, -1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(-8.0f, 1.0f, 0.0f));
+    models[0].setLocalTransformationMatrix(modelMatrix);
+
+    // Create the local transformation matrix for second model
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+    modelMatrix = glm::rotate(modelMatrix, 1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(8.0f, 1.0f, 0.0f));
+    models[1].setLocalTransformationMatrix(modelMatrix);
+
 //    const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
 //    if ( useMeshAnimation )
 //    {
-//        modelMatrix = glm::rotate( modelMatrix, static_cast< float >( currentTime ) * 0.001f, glm::vec3( 0.0f, 1.f, 0.f ) );
+//        modelMatrix = glm::rotate( modelMatrix, static_cast< float >( currentFrameTime ) * 0.001f, glm::vec3( 0.0f, 1.f, 0.f ) );
 //    }
-    //modelMatrix = glm::rotate( modelMatrix, glm::vec4(1.0f, 0.0f, 1.f, 0.f ) );
+
 
     // Lighting
     // - normalMatrix
@@ -424,16 +270,12 @@ void display( void )
     shaderProgram.setMat4("viewMatrix", viewMatrix);
     // - projection matrix
     shaderProgram.setMat4("projectionMatrix", projectionMatrix);
-    // - viewPosition
-    shaderProgram.setVec3("viewPos", _cameraCenter);
+    // - scene transformation matrix
+    shaderProgram.setMat4("sceneMatrix", SceneTransformationMatrix);
 
     // Mesh
-    // - model matrix
-    shaderProgram.setMat4("modelMatrix", modelMatrix);
-    // - mesh color
-    shaderProgram.setVec3("meshColor", _meshColor);
     // Animation
-    shaderProgram.setFloat("time", static_cast< float >( currentTime ) );
+    shaderProgram.setFloat("time", static_cast< float >( currentFrameTime ) );
 
     // Lighting
     // - normalMatrix
@@ -456,13 +298,10 @@ void display( void )
 
     for(unsigned int i=0; i<models.size(); i++)
     {
+        // - model matrix
+        shaderProgram.setMat4("modelMatrix",  models[i].getLocalTransformationMatrix());
         models[i].draw(shaderProgram);
     }
-
-//    glBindVertexArray(vertexArray);
-//    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)0);
-//    glCheckError();
-//    glBindVertexArray(0);
 
     // Reset GL state(s) (fixed pipeline)
     //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
@@ -506,7 +345,7 @@ int main( int argc, char** argv )
     //   and activate double buffering (for fluid/smooth visualization)
     glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE |GLUT_DEPTH);
     // - window size and position
-    glutInitWindowSize( 640, 480 );
+    glutInitWindowSize( SCR_WIDTH, SCR_HEIGHT );
     glutInitWindowPosition( 50, 50 );
     // - create the window
     glutCreateWindow( "Projet LMG" );
@@ -516,6 +355,13 @@ int main( int argc, char** argv )
     glutDisplayFunc( display );
     // - callback continuously called when events are not being received
     glutIdleFunc( idle );
+    // - get mouse inputs
+    glutMouseFunc(mousePressedEvent);
+    // - get mouse movements
+    glutPassiveMotionFunc(mousePassiveEvent);
+    // - get keyboard inputs
+    glutKeyboardFunc(keyPressedEvent);
+
 
     // Initialize the GLEW library
     // - mandatory to be able to use OpenGL extensions,
@@ -534,27 +380,6 @@ int main( int argc, char** argv )
     // Build shader
     shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
 
-        // TEST
-
-
-    //float vertices[] = {
-    //    0.0f, 0.5f, 0.0f, 1.0, 1.0, 1.0,
-    //    0.5f, -0.5f, 0.0f, 1.0, 1.0, 1.0,
-    //    -0.5f, -0.5f, 0.0f, 1.0, 1.0, 1.0
-
-    vertex2 newVertex;
-    newVertex.position = glm::vec3(0.0f, 0.5f, 0.0f);
-    newVertex.color = glm::vec3(0.0f, 0.0f, 1.0f);
-    vertices.push_back(newVertex);
-     vertex2 newVertex2;
-    newVertex2.position = glm::vec3(0.5f, -0.5f, 0.0f);
-    newVertex2.color = glm::vec3(1.0f, 0.0f, 0.0f);
-    vertices.push_back(newVertex2);
-     vertex2 newVertex3;
-    newVertex3.position = glm::vec3(-0.5f, -0.5f, 0.0f);
-    newVertex3.color = glm::vec3(0.0f, 1.0f, 0.0f);
-    vertices.push_back(newVertex3);
-
 
     // Load objects
             // "Models/Crate/Crate1.obj"
@@ -562,51 +387,9 @@ int main( int argc, char** argv )
             // "Models/NanoSuit/nanosuit.obj" -> Works !
             // "Models/StarWars/test_obj/Arc170.obj"
     models.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
-
-//    glGenVertexArrays(1, &vertexArray);
-//    glCheckError();
-//    glGenBuffers(1, &positionBuffer);
-//    glCheckError();
-//    glGenBuffers(1, &indexBuffer);
-//    glCheckError();
-
-//    glBindVertexArray(vertexArray);
-//    glCheckError();
-
-//    glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
-//    glCheckError();
-//    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vertex2) /*sizeof(vertices)*/, vertices.data(), GL_STATIC_DRAW);
-//    glCheckError();
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-//    glCheckError();
-//    glBufferData(GL_ELEMENT_ARRAY_BUFFER,indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-//    glCheckError();
-
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, /*6*sizeof(float)*/ sizeof(vertex2), (void*)0);
-//    glCheckError();
-//    glEnableVertexAttribArray(0);
-//    glCheckError();
-
-//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, /*6*sizeof(float)*/ sizeof(vertex2), /*(void*)(3*sizeof(float))*/ (void*)(offsetof(vertex2, color)));
-//    glCheckError();
-//    glEnableVertexAttribArray(1);
-//    glCheckError();
-
-//    glBindVertexArray(0);
-//    glCheckError();
+    models.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
 
 
-
-//    std::cout << "size of indices : " << sizeof(indices) << std::endl;
-//    std::cout << "Size of Vertex struct : " << sizeof(Vertex) << std::endl;
-//    std::cout << "\tSize of position : " << sizeof(Vertex::position) << std::endl;
-//    std::cout << "\tSize of normals : " << sizeof(Vertex::normal) << std::endl;
-//    std::cout << "\tSize of texture coordinats : " << sizeof(Vertex::textCoords) << std::endl;
-//    std::cout << "Begin of normals :" << (((void*)offsetof(Vertex, Vertex::normal)) == ((void*)sizeof(Vertex::position))) << std::endl;
-//    std::cout << "Begin of texture :" << (void*)offsetof(Vertex, Vertex::textCoords) << std::endl;
-
-
-    initializeCamera();
 
     // Enter the GLUT main event loop (waiting for events: keyboard, mouse, refresh screen, etc...)
     glutMainLoop();

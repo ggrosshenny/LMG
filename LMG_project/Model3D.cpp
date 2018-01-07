@@ -7,7 +7,30 @@
 Model3D::Model3D(std::string path)
 {
     this->WarningMessageForShaderAlreadyShown = false;
+    this->localTransformationMatrix = glm::mat4(1.0f);
     this->loadModel(path);
+}
+
+
+// ===================
+// Getters and setters
+
+glm::mat4 Model3D::getLocalTransformationMatrix()
+{
+    return this->localTransformationMatrix;
+}
+
+void Model3D::setLocalTransformationMatrix(glm::mat4 matrix)
+{
+    this->localTransformationMatrix = matrix;
+}
+
+void Model3D::setLocalTransformationMatrix(glm::vec3 scaleVector, float rotationAngle, glm::vec3 rotateVector, glm::vec3 translateVector)
+{
+    this->localTransformationMatrix = glm::mat4(1.0f);
+    this->localTransformationMatrix = glm::scale(this->localTransformationMatrix, scaleVector);
+    this->localTransformationMatrix = glm::rotate(this->localTransformationMatrix, rotationAngle, rotateVector);
+    this->localTransformationMatrix = glm::translate(this->localTransformationMatrix, translateVector);
 }
 
 

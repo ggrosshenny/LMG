@@ -27,12 +27,16 @@ class Model3D
 // Attributes
 private:
     /// List of meshes
-    std::string directory;
-    std::map<std::string, Texture, classComp> loadedTextures;
-    bool WarningMessageForShaderAlreadyShown;
-
-public:
     std::vector<Mesh> meshes;
+    /// Texture directory
+    std::string directory;
+    /// Loaded textures
+    std::map<std::string, Texture, classComp> loadedTextures;
+    // Used to not overflow the cerr output
+    bool WarningMessageForShaderAlreadyShown;
+    /// local transformation matrix
+    glm::mat4 localTransformationMatrix;
+
 
 
 // Constructor
@@ -44,6 +48,33 @@ public:
      * @param path path of the 3D model
      */
     Model3D(std::string path);
+
+
+// Getters and setters
+public:
+
+
+    /**
+     * @brief getLocalTransformationMatrix return the local transformation matrix of the model
+     * @return
+     */
+    glm::mat4 getLocalTransformationMatrix();
+
+
+    /**
+     * @brief setLocalTransformationMatrix change the local transformation matrix of the model with the given one
+     * @param matrix
+     */
+    void setLocalTransformationMatrix(glm::mat4 matrix);
+
+
+    /**
+     * @brief setLocalTransformationMatrix create the new transformation matrix of the mode with the given vectors
+     * @param scaleVector scale vector to add to the matrix
+     * @param rotateVector rotation vector to add to the matrix
+     * @param translateVector translation vector to add to the matrix
+     */
+    void setLocalTransformationMatrix(glm::vec3 scaleVector, float rotationAngle, glm::vec3 rotateVector, glm::vec3 translateVector);
 
 
 // Methods

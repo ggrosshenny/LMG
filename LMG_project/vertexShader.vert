@@ -10,6 +10,8 @@ in vec2 textCoords;
   // - camera
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
+  // Scene
+uniform mat4 sceneMatrix;
   // - 3D model
 uniform mat4 modelMatrix;
   // Lightning
@@ -27,7 +29,7 @@ out vec3 NormalInWorldSpace;
 void main( void )
 {
     // Send position to Clip-space
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4( position, 1.0 );
+    gl_Position = projectionMatrix * viewMatrix * sceneMatrix * modelMatrix * vec4( position, 1.0 );
     
     // Compute normal position in world space
     NormalInWorldSpace = normalMatrix * normal;
