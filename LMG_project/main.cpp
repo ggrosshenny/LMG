@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "Model3D.h"
 #include "Camera.h"
+#include "SkyBox.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -33,12 +34,24 @@ int lastMousePositionY = 0.0f;
 // Path to sources
 std::string pathToSrc = "../LMG_project/";
 
-// Shader program
+// Shader programs
 Shader shaderProgram;
+Shader skyboxShader;
 
 // Camera object
 Camera camera(glm::vec3( 0.f, 2.f, 4.f ), glm::vec3( 0.f, 1.f, 0.f ));
 
+// SkyBox
+    // - faces
+std::vector<std::string>faces = {
+    pathToSrc + "SkyBoxes/SkyBox1/right.jpg",
+    pathToSrc + "SkyBoxes/SkyBox1/left.jpg",
+    pathToSrc + "SkyBoxes/SkyBox1/top.jpg",
+    pathToSrc + "SkyBoxes/SkyBox1/bottom.jpg",
+    pathToSrc + "SkyBoxes/SkyBox1/back.jpg",
+    pathToSrc + "SkyBoxes/SkyBox1/front.jpg"
+};
+SkyBox skybox;
 
 // Models
 std::vector<Model3D> models;
@@ -207,11 +220,6 @@ void display( void )
     // - clear the "color" framebuffer
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    //--------------------
-    // Activate shader program
-    //--------------------
-    shaderProgram.use();
-
 
     //--------------------
     // Send uniforms to GPU
@@ -265,6 +273,11 @@ void display( void )
     // Mesh color
     _meshColor = glm::vec3( 0.f, 1.f, 0.f );
 
+
+    //--------------------
+    // Activate shader program
+    //--------------------
+    shaderProgram.use();
     // Camera
     // - view matrix
     shaderProgram.setMat4("viewMatrix", viewMatrix);
@@ -294,8 +307,6 @@ void display( void )
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
     // Call draw method on each model
-
-
     for(unsigned int i=0; i<models.size(); i++)
     {
         // - model matrix
@@ -303,11 +314,20 @@ void display( void )
         models[i].draw(shaderProgram);
     }
 
+
+    // Scale skybox
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(100.0f, 100.0f, 100.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+
+    // draw skybox
+    skybox.draw(skyboxShader, viewMatrix, projectionMatrix, modelMatrix);
+
     // Reset GL state(s) (fixed pipeline)
     //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
     // Deactivate current shader program
     glUseProgram( 0 );
+
 
     //--------------------
     // END frame
@@ -379,6 +399,10 @@ int main( int argc, char** argv )
 
     // Build shader
     shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
+    skyboxShader = Shader(pathToSrc+"skyboxShader.vert", pathToSrc+"skyboxShader.frag");
+
+    // Create skybox object
+    skybox = SkyBox(faces);
 
 
     // Load objects

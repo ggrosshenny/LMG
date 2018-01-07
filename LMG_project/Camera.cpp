@@ -94,8 +94,6 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool constraintP
     this->yaw -= xOffset;
     this->pitch -= yOffset;
 
-    std::cout << "Pitch : " << this->pitch << " and Yaw : " << this->yaw << std::endl;
-
     // Prevent from screen flipping
     if(constraintPitch)
     {
