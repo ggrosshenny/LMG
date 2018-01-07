@@ -37,10 +37,12 @@ class SkyBox
 {
 // Attributes
 private:
-    GLuint textureID;
     GLuint VAO;
     GLuint VBO;
     std::vector<float> vertices;
+
+public:
+    GLuint textureID;
 
 // Constructors
 public:

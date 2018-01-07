@@ -12,6 +12,8 @@ uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_diffuse2;
   // Specular textures
 uniform sampler2D texture_specular1;
+  // skybox texture
+uniform samplerCube skybox;
   // material coefficient
 uniform vec3 kd;
   // light color
@@ -28,8 +30,15 @@ out vec4 fragmentColor;
 void main( void )
 {
     vec3 result;
+    
+    // Get envMap texture coordinate by reflexion
+    vec3 viewDirectionVector = normalize(FragPos - viewPos);
+    vec3 reflectionVector = reflect(viewDirectionVector, normalize(NormalInWorldSpace));
+    
     // Get texture color
-    vec4 tempColor = texture(texture_diffuse1, textureCoordinates);
+    float reflectionStrenght = 0.3;
+    vec4 reflectedColor = mix(texture(texture_diffuse1, textureCoordinates), texture(skybox, reflectionVector), reflectionStrenght) ;
+    vec4 tempColor = mix(texture(texture_diffuse1, textureCoordinates), reflectedColor, 0.5);
     // Ambient light
     float ambientStrenght = 0.45;
     vec3 ambient = ambientStrenght * lightColor;

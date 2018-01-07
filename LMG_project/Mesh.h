@@ -115,6 +115,14 @@ public:
     bool draw(Shader& shader, bool messageAlreadySpread);
 
 
+    /**
+     * @brief drawdraw the current mesh with the given shader by passing informations in the uniform of the shader
+     * @param shader shader object containing vertex and fragment shaders
+     * @param messageAlreadySpread bool to know if we have to spread the error message
+     */
+    bool draw(Shader& shader, GLuint skyboxTextureID, bool messageAlreadySpread);
+
+
 // Auxiliary methods
 private:
 

@@ -21,8 +21,9 @@
  ******************************************************************************/
 
 // Screen properties
-int SCR_WIDTH = 800;
-int SCR_HEIGHT = 648;
+int SCR_WIDTH = 1300;
+int SCR_HEIGHT = 1024;
+
 
 // Mouse position catching
 bool firstTimeMousePositionCaught = true;
@@ -30,13 +31,15 @@ int lastMousePositionX = 0.0f;
 int lastMousePositionY = 0.0f;
 
 
-
 // Path to sources
 std::string pathToSrc = "../LMG_project/";
 
+
 // Shader programs
 Shader shaderProgram;
+Shader glassShader;
 Shader skyboxShader;
+
 
 // Camera object
 Camera camera(glm::vec3( 0.f, 2.f, 4.f ), glm::vec3( 0.f, 1.f, 0.f ));
@@ -52,9 +55,11 @@ std::vector<std::string>faces = {
     pathToSrc + "SkyBoxes/SkyBox1/front.jpg"
 };
 SkyBox skybox;
+bool isSkyboxActive = false;
 
 // Models
-std::vector<Model3D> models;
+std::vector<Model3D> modelsWithProgrammShader;
+std::vector<Model3D> modelsWithGlassShader;
 
 // Mesh parameters
 glm::vec3 _meshColor;
@@ -245,14 +250,14 @@ void display( void )
     modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
     modelMatrix = glm::rotate(modelMatrix, -1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(-8.0f, 1.0f, 0.0f));
-    models[0].setLocalTransformationMatrix(modelMatrix);
+    modelsWithProgrammShader[0].setLocalTransformationMatrix(modelMatrix);
 
     // Create the local transformation matrix for second model
     modelMatrix = glm::mat4(1.0f);
     modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
     modelMatrix = glm::rotate(modelMatrix, 1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(8.0f, 1.0f, 0.0f));
-    models[1].setLocalTransformationMatrix(modelMatrix);
+    modelsWithGlassShader[0].setLocalTransformationMatrix(modelMatrix);
 
 //    const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
 //    if ( useMeshAnimation )
@@ -285,6 +290,8 @@ void display( void )
     shaderProgram.setMat4("projectionMatrix", projectionMatrix);
     // - scene transformation matrix
     shaderProgram.setMat4("sceneMatrix", SceneTransformationMatrix);
+    // - cameraPosition
+    shaderProgram.setVec3("viewPos", camera.cameraPosition);
 
     // Mesh
     // Animation
@@ -306,17 +313,77 @@ void display( void )
     // Set GL state(s) (fixed pipeline)
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
-    // Call draw method on each model
-    for(unsigned int i=0; i<models.size(); i++)
+    // Call draw method on each model (with programmShader as shader)
+    if(!isSkyboxActive)
     {
-        // - model matrix
-        shaderProgram.setMat4("modelMatrix",  models[i].getLocalTransformationMatrix());
-        models[i].draw(shaderProgram);
+        for(unsigned int i=0; i<modelsWithProgrammShader.size(); i++)
+        {
+            // - model matrix
+            shaderProgram.setMat4("modelMatrix",  modelsWithProgrammShader[i].getLocalTransformationMatrix());
+            modelsWithProgrammShader[i].draw(shaderProgram);
+        }
+    }
+    else
+    {
+        for(unsigned int i=0; i<modelsWithProgrammShader.size(); i++)
+        {
+            // - model matrix
+            shaderProgram.setMat4("modelMatrix",  modelsWithProgrammShader[i].getLocalTransformationMatrix());
+            modelsWithProgrammShader[i].draw(shaderProgram, skybox.textureID);
+        }
     }
 
 
+    //--------------------
+    // Activate glass shader program
+    //--------------------
+    glassShader.use();
+    // Camera
+    // - view matrix
+    glassShader.setMat4("viewMatrix", viewMatrix);
+    // - projection matrix
+    glassShader.setMat4("projectionMatrix", projectionMatrix);
+    // - scene transformation matrix
+    glassShader.setMat4("sceneMatrix", SceneTransformationMatrix);
+    // - cameraPosition
+    glassShader.setVec3("viewPos", camera.cameraPosition);
+
+    // Lighting
+    // - normalMatrix
+    glassShader.setMat3("normalMatrix", normalMatrix);
+    // - refraction ratio
+    glassShader.setFloat("refractionRatio", (1.0f/2.42f));
+
+    //--------------------
+    // Render scene
+    //--------------------
+    // Set GL state(s) (fixed pipeline)
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+    // Call draw method on each model (with programmShader as shader)
+    if(!isSkyboxActive)
+    {
+        for(unsigned int i=0; i<modelsWithGlassShader.size(); i++)
+        {
+            // - model matrix
+            shaderProgram.setMat4("modelMatrix",  modelsWithGlassShader[i].getLocalTransformationMatrix());
+            modelsWithGlassShader[i].draw(glassShader);
+        }
+    }
+    else
+    {
+        for(unsigned int i=0; i<modelsWithGlassShader.size(); i++)
+        {
+            // - model matrix
+            shaderProgram.setMat4("modelMatrix",  modelsWithGlassShader[i].getLocalTransformationMatrix());
+            modelsWithGlassShader[i].draw(glassShader, skybox.textureID);
+        }
+    }
+
+
+
     // Scale skybox
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(100.0f, 100.0f, 100.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1000.0f, 1000.0f, 1000.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
 
     // draw skybox
@@ -399,10 +466,14 @@ int main( int argc, char** argv )
 
     // Build shader
     shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
+    glassShader = Shader(pathToSrc+"glassShader.vert", pathToSrc+"glassShader.frag");
     skyboxShader = Shader(pathToSrc+"skyboxShader.vert", pathToSrc+"skyboxShader.frag");
+
+    std::cout << "shaderProgramm : " << shaderProgram._shaderId << ", glassShader : " << glassShader._shaderId << std::endl;
 
     // Create skybox object
     skybox = SkyBox(faces);
+    isSkyboxActive = true;
 
 
     // Load objects
@@ -410,8 +481,8 @@ int main( int argc, char** argv )
             // "Models/Falcon/millenium-falcon.obj"
             // "Models/NanoSuit/nanosuit.obj" -> Works !
             // "Models/StarWars/test_obj/Arc170.obj"
-    models.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
-    models.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
+    modelsWithProgrammShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
+    modelsWithGlassShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
 
 
 

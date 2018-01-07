@@ -46,6 +46,14 @@ void Model3D::draw(Shader &shader)
     }
 }
 
+void Model3D::draw(Shader& shader, GLuint skyboxTextureID)
+{
+    for(unsigned int i = 0; i<this->meshes.size(); i++)
+    {
+        this->WarningMessageForShaderAlreadyShown = this->meshes[i].draw(shader, skyboxTextureID, this->WarningMessageForShaderAlreadyShown);
+    }
+}
+
 
 unsigned int Model3D::textureFromFile(const std::string path, const std::string &directory)
 {

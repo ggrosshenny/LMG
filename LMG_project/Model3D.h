@@ -89,6 +89,13 @@ public:
 
 
     /**
+     * @brief draw draw all meshes of the 3D model with the given shader object and the given skybox texture
+     * @param shader
+     */
+    void draw(Shader& shader, GLuint skyboxTextureID);
+
+
+    /**
      * @brief textureFromFile load and link to OpenGL a texture from a file
      * @param path file path
      * @param directory file directory

@@ -31,7 +31,7 @@
 /// SPEED default
 #define SPEED 0.15f
 /// SENSITIVITY default
-#define SENSITIVITY 0.1f
+#define SENSITIVITY 0.2f
 /// ZOOM default
 #define ZOOM 45.0f
 
