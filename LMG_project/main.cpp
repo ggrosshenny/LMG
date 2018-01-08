@@ -35,7 +35,7 @@ int lastMousePositionY = 0.0f;
 
 // Path to sources
 std::string pathToSrc = "../LMG_project/";
-std::string pathToShader = pathToSrc + "Shaders";
+std::string pathToShader = pathToSrc + "Shaders/";
 
 
 // Shader programs
