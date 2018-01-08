@@ -26,7 +26,9 @@ int SCR_HEIGHT = 1024;
 
 
 // Mouse position catching
-bool firstTimeMousePositionCaught = true;
+bool rightMouseButtonDown = false;
+bool leftMouseButtonDown = false;
+bool middleMouseButtonDown = false;
 int lastMousePositionX = 0.0f;
 int lastMousePositionY = 0.0f;
 
@@ -87,6 +89,9 @@ float lastFrameTime = 0.0f;
  ***************************** METHOD DEFINITION ******************************
  ******************************************************************************/
 
+void display();
+void idle( void );
+void mousePassiveEventWithRedisplay(int x, int y);
 bool initialize();
 bool checkExtensions();
 bool finalize();
@@ -145,41 +150,116 @@ bool checkExtensions()
 
 void mousePressedEvent(int button, int state, int x, int y)
 {
+        switch(button)
+        {
+            case GLUT_LEFT_BUTTON:
+                // save the mouse button state and the mouse position in lastX, lastY
+                if(state == GLUT_DOWN)
+                {
+                    if(!rightMouseButtonDown && !middleMouseButtonDown)
+                    {
+                        leftMouseButtonDown = true;
+                        lastMousePositionX = x;
+                        lastMousePositionY = y;
+                    }
 
-    switch(button)
-    {
-        // Scroll up
-        case 3:
-            camera.processMouseScroll(y);
-            break;
+                }
+                else if(state == GLUT_UP)
+                {
+                    leftMouseButtonDown = false;
+                }
+                break;
 
-        case 4:
-            camera.processMouseScroll(y);
-            break;
+            // Right mouse button
+            case GLUT_RIGHT_BUTTON:
+                // save the mouse button state and the mouse position in lastX, lastY
+                if(state == GLUT_DOWN)
+                {
+                    if(!leftMouseButtonDown && !middleMouseButtonDown)
+                    {
+                        rightMouseButtonDown = true;
+                        lastMousePositionX = x;
+                        lastMousePositionY = y;
+                    }
 
-        default:
-            break;
-    }
+                }
+                else if(state == GLUT_UP)
+                {
+                    rightMouseButtonDown = false;
+                }
+                break;
+
+            // Scroll up
+            case GLUT_MIDDLE_BUTTON:
+                // middleMouseButtonDown
+                if(state == GLUT_DOWN)
+                {
+                    if(!leftMouseButtonDown && !rightMouseButtonDown)
+                    {
+                        middleMouseButtonDown = true;
+                        lastMousePositionX = x;
+                        lastMousePositionY = y;
+                    }
+
+                }
+                else if(state == GLUT_UP)
+                {
+                    middleMouseButtonDown = false;
+                }
+                break;
+
+
+            default:
+                break;
+        }
+
 }
 
 void mousePassiveEvent(int mousePositionX, int mousePositionY)
 {
     float xOffset = 0.0f;
     float yOffset = 0.0f;
-
-    if(firstTimeMousePositionCaught)
+    if(rightMouseButtonDown)
     {
+        xOffset = lastMousePositionX - mousePositionX;
+        yOffset = mousePositionY - lastMousePositionY;
         lastMousePositionX = mousePositionX;
         lastMousePositionY = mousePositionY;
-        firstTimeMousePositionCaught = false;
+
+        camera.processMouseMovement(xOffset, yOffset, true);
     }
+    else if(leftMouseButtonDown)
+    {
+        // Move the current object (translation)
+    }
+    else if(middleMouseButtonDown)
+    {
+        xOffset = lastMousePositionX - mousePositionX;
+        yOffset = mousePositionY - lastMousePositionY;
+        lastMousePositionX = mousePositionX;
+        lastMousePositionY = mousePositionY;
 
-    xOffset = lastMousePositionX - mousePositionX;
-    yOffset = mousePositionY - lastMousePositionY;
-    lastMousePositionX = mousePositionX;
-    lastMousePositionY = mousePositionY;
-
-    camera.processMouseMovement(xOffset, yOffset, true);
+        // move to the right
+        if(xOffset > 0)
+        {
+            camera.processMouseTranslation(RIGHT, deltaTime);
+        }
+        // Move to the left
+        else if(xOffset < 0)
+        {
+            camera.processMouseTranslation(LEFT, deltaTime);
+        }
+        // Move down
+        if(yOffset > 0)
+        {
+            camera.processMouseTranslation(DOWN, deltaTime);
+        }
+        // Move up
+        else if(yOffset < 0)
+        {
+            camera.processMouseTranslation(UP, deltaTime);
+        }
+    }
 
 }
 
@@ -442,10 +522,10 @@ int main( int argc, char** argv )
     glutDisplayFunc( display );
     // - callback continuously called when events are not being received
     glutIdleFunc( idle );
+    // - get mouse movements
+    glutMotionFunc(mousePassiveEvent);
     // - get mouse inputs
     glutMouseFunc(mousePressedEvent);
-    // - get mouse movements
-    glutPassiveMotionFunc(mousePassiveEvent);
     // - get keyboard inputs
     glutKeyboardFunc(keyPressedEvent);
 

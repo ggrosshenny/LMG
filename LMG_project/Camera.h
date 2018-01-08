@@ -36,7 +36,7 @@
 #define ZOOM 45.0f
 
 
-enum movementType{ FORWARD, BACKWARD, LEFT, RIGHT};
+enum movementType{ FORWARD, BACKWARD, LEFT, RIGHT, UP, DOWN};
 
 
 class Camera
@@ -129,6 +129,14 @@ public:
      * @param constraintPitch boolean to know if we have to apply a constraint on pitch or not
      */
     void processMouseMovement(float xOffset, float yOffset, bool constraintPitch);
+
+
+    /**
+     * @brief processMouseTranslation change camera position with mouse movement
+     * @param xOffset
+     * @param yOffset
+     */
+    void processMouseTranslation(movementType direction, float deltaTime);
 
 
     /**

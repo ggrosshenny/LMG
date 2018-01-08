@@ -111,6 +111,30 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool constraintP
 }
 
 
+void Camera::processMouseTranslation(movementType direction, float deltaTime)
+{
+    float velocity = (this->cameraSpeed * deltaTime) / 10;
+
+    switch(direction)
+    {
+        case DOWN :
+            this->cameraPosition += this->cameraUp * velocity;
+            break;
+        case UP :
+            this->cameraPosition -= this->cameraUp * velocity;
+            break;
+        case LEFT :
+            this->cameraPosition -= this->cameraRight * velocity;
+            break;
+        case RIGHT :
+            this->cameraPosition += this->cameraRight * velocity;
+            break;
+        default:
+            break;
+    }
+}
+
+
 void Camera::processMouseScroll(float yOffset)
 {
     if((this->zoom >= 1.0f) && (this->zoom <= 45.0f) )
