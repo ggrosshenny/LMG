@@ -3,7 +3,7 @@
 
 // Includes
 
-#include "ErroHandling.h"
+#include "ErrorHandling.h"
 
 // STL
 #include <iostream>

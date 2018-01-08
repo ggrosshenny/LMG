@@ -35,6 +35,7 @@ int lastMousePositionY = 0.0f;
 
 // Path to sources
 std::string pathToSrc = "../LMG_project/";
+std::string pathToShader = pathToSrc + "Shaders";
 
 
 // Shader programs
@@ -545,11 +546,9 @@ int main( int argc, char** argv )
     checkExtensions();
 
     // Build shader
-    shaderProgram = Shader(pathToSrc+"vertexShader.vert", pathToSrc+"fragmentShader.frag");
-    glassShader = Shader(pathToSrc+"glassShader.vert", pathToSrc+"glassShader.frag");
-    skyboxShader = Shader(pathToSrc+"skyboxShader.vert", pathToSrc+"skyboxShader.frag");
-
-    std::cout << "shaderProgramm : " << shaderProgram._shaderId << ", glassShader : " << glassShader._shaderId << std::endl;
+    shaderProgram = Shader(pathToShader+"vertexShader.vert", pathToShader+"fragmentShader.frag");
+    glassShader = Shader(pathToShader+"glassShader.vert", pathToShader+"glassShader.frag");
+    skyboxShader = Shader(pathToShader+"skyboxShader.vert", pathToShader+"skyboxShader.frag");
 
     // Create skybox object
     skybox = SkyBox(faces);
