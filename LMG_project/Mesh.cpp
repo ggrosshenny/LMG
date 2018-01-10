@@ -60,24 +60,6 @@ void Mesh::setupMesh()
     glBindVertexArray(0);
     glCheckError();
 
-//    std::cout << "VAO : " << this->VAO << ", VBO : " << this->VBO << ", EBO : " << this->EBO << std::endl;
-
-//    std::cout << "vertex size : " << this->vertices.size() << std::endl;
-//    for(unsigned int i=0; i<this->indices.size(); i++)
-//    {
-//        std::cout << "position : (" << this->vertices[i].position.x << ", " << this->vertices[i].position.y << ", " <<  this->vertices[i].position.z << ")" << std::endl;
-//        std::cout << "\tnormal : (" << this->vertices[i].normal.x << ", " << this->vertices[i].normal.y << ", " << this->vertices[i].normal.z << ")" << std::endl;
-//        std::cout << "\ttextCoordinates : (" << this->vertices[i].textCoords.x << ", " << this->vertices[i].textCoords.y << ")" << std::endl;
-
-//    }
-
-//    std::cout << "indices size : " << this->indices.size() << std::endl;
-
-//    for(unsigned int i=0; i<this->indices.size(); i++)
-//    {
-//        std::cout << "indice[" << i << "] = " << this->indices[i] << std::endl;
-//    }
-
 }
 
 

@@ -36,7 +36,6 @@
 
 // structs used to store mesh data
 
-
 /**
  * @brief The Vertex struct is used to modelise a vertex with all its data
  */
@@ -50,7 +49,6 @@ struct Vertex
     glm::vec2 textCoords;
     // Add more stuff ?
 };
-
 
 
 /**
@@ -136,28 +134,3 @@ private:
 
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,6 +8,7 @@
 #include "Model3D.h"
 #include "Camera.h"
 #include "SkyBox.h"
+#include "HeightMap.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -36,16 +37,22 @@ int lastMousePositionY = 0.0f;
 // Path to sources
 std::string pathToSrc = "../LMG_project/";
 std::string pathToShader = pathToSrc + "Shaders/";
+std::string pathToMaps = pathToSrc + "HeightMap/";
+std::string pathToTextures = pathToSrc + "Textures/";
 
 
 // Shader programs
 Shader shaderProgram;
 Shader glassShader;
 Shader skyboxShader;
+Shader mapShader;
 
 
 // Camera object
 Camera camera(glm::vec3( 0.f, 2.f, 4.f ), glm::vec3( 0.f, 1.f, 0.f ));
+
+// Map object
+HeightMap map;
 
 // SkyBox
     // - faces
@@ -355,9 +362,46 @@ void display( void )
     // - lightColor
     lightColor = glm::vec3(1.0, 1.0, 1.0);
     // - lightPosition
-    lightPosition = glm::vec3(1.0, 5.0, 0.0);
+    lightPosition = glm::vec3(1.0, 350.0, 0.0);
     // Mesh color
     _meshColor = glm::vec3( 0.f, 1.f, 0.f );
+
+
+    //--------------------
+    // Activate map shader program
+    //--------------------
+    mapShader.use();
+    // Camera
+    // - view matrix
+    mapShader.setMat4("viewMatrix", viewMatrix);
+    // - projection matrix
+    mapShader.setMat4("projectionMatrix", projectionMatrix);
+    // - scene transformation matrix
+    mapShader.setMat4("sceneMatrix", SceneTransformationMatrix);
+    // - cameraPosition
+    mapShader.setVec3("viewPos", camera.cameraPosition);
+
+    // Lighting
+    // - normalMatrix
+    mapShader.setMat3("normalMatrix", normalMatrix);
+    // - lightPosition
+    mapShader.setVec3("lightPosition", lightPosition);
+    // - lightColor
+    mapShader.setVec3("lightColor", lightColor);
+
+    // Scale map
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 0.1f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(-100.0f, -180.0f, -100.0f));
+
+    mapShader.setMat4("mapModelMatrix", modelMatrix);
+
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+    map.draw(mapShader, "texture_diffuse", texture);
+
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+
 
 
     //--------------------
@@ -463,12 +507,16 @@ void display( void )
 
 
 
-    // Scale skybox
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(1000.0f, 1000.0f, 1000.0f));
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+    if(isSkyboxActive)
+    {
+        // Scale skybox
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(1000.0f, 1000.0f, 1000.0f));
+        modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
 
-    // draw skybox
-    skybox.draw(skyboxShader, viewMatrix, projectionMatrix, modelMatrix);
+        // draw skybox
+        skybox.draw(skyboxShader, viewMatrix, projectionMatrix, modelMatrix);
+    }
+
 
     // Reset GL state(s) (fixed pipeline)
     //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
@@ -549,11 +597,14 @@ int main( int argc, char** argv )
     shaderProgram = Shader(pathToShader+"vertexShader.vert", pathToShader+"fragmentShader.frag");
     glassShader = Shader(pathToShader+"glassShader.vert", pathToShader+"glassShader.frag");
     skyboxShader = Shader(pathToShader+"skyboxShader.vert", pathToShader+"skyboxShader.frag");
+    mapShader = Shader(pathToShader+"mapShader.vert", pathToShader+"mapShader.frag");
 
     // Create skybox object
     skybox = SkyBox(faces);
     isSkyboxActive = true;
 
+    // Create map object
+    map = HeightMap(pathToMaps + "Heightmap2.png", pathToTextures + "terrain_01.jpg", 5);
 
     // Load objects
             // "Models/Crate/Crate1.obj"

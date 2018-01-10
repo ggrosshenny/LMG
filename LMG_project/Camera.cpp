@@ -113,7 +113,7 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool constraintP
 
 void Camera::processMouseTranslation(movementType direction, float deltaTime)
 {
-    float velocity = (this->cameraSpeed * deltaTime) / 10;
+    float velocity = (this->cameraSpeed * deltaTime) / 60;
 
     switch(direction)
     {
