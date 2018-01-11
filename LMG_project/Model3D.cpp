@@ -33,6 +33,9 @@ void Model3D::setLocalTransformationMatrix(glm::vec3 scaleVector, float rotation
     this->localTransformationMatrix = glm::translate(this->localTransformationMatrix, translateVector);
 }
 
+void Model3D::transformLocalMatrix(glm::mat4 matrix){
+    this->localTransformationMatrix = matrix * this->localTransformationMatrix;
+}
 
 // =======
 // Methods
@@ -259,19 +262,3 @@ std::vector<Texture> Model3D::loadMaterialTextures(aiMaterial *mat, aiTextureTyp
 
     return textures;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

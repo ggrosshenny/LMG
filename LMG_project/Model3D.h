@@ -76,6 +76,11 @@ public:
      */
     void setLocalTransformationMatrix(glm::vec3 scaleVector, float rotationAngle, glm::vec3 rotateVector, glm::vec3 translateVector);
 
+    /**
+     * @brief transformLocalMatrix multiply the local transformation matrix of the 3D model with matrix
+     * @param matrix transformation to be applied to the 3D model's matrix
+     */
+    void transformLocalMatrix(glm::mat4 matrix);
 
 // Methods
 public:

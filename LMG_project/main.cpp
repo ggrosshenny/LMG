@@ -234,14 +234,6 @@ void mousePressedEvent(int button, int state, int x, int y)
                         leftMouseButtonDown = true;
                         lastMousePositionX = x;
                         lastMousePositionY = y;
-/*
-                        currentModelUpdate();
-
-                        if(currentModel != NULL){
-                            std::cout << "model found " << std::endl;
-                        }
-
-                        currentModel = NULL;*/
                     }
 
                 }
@@ -296,6 +288,8 @@ void mousePressedEvent(int button, int state, int x, int y)
 
 }
 
+//--------------------------------------------
+
 void mousePassiveEvent(int mousePositionX, int mousePositionY)
 {
     float xOffset = 0.0f;
@@ -344,6 +338,8 @@ void mousePassiveEvent(int mousePositionX, int mousePositionY)
 
 }
 
+//--------------------------------------------
+
 void keyPressedEvent(unsigned char key, int x, int y)
 {
     switch(key)
@@ -365,12 +361,72 @@ void keyPressedEvent(unsigned char key, int x, int y)
     glutPostRedisplay();
 }
 
+//--------------------------------------------
+
 void specialKeyPressedEvent(int key, int x, int y){
 
     switch(key)
     {
         case GLUT_KEY_PAGE_UP :
             currentModelUpdate();
+        break;
+        case GLUT_KEY_UP :
+            if(glutGetModifiers() & GLUT_ACTIVE_SHIFT && currentModel!= NULL){ // Shit -> rotation
+                glm::mat4 temp = glm::mat4();
+                temp = glm::rotate(temp, 1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
+            if(glutGetModifiers() & GLUT_ACTIVE_CTRL && currentModel!= NULL){ // Ctrl -> translate
+                glm::mat4 temp = glm::mat4();
+                temp = glm::translate(temp, glm::vec3(0.0f, 0.0f, 1.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
+            if(glutGetModifiers() & GLUT_ACTIVE_ALT && currentModel!= NULL){ // Alt -> scale
+                glm::mat4 temp = glm::mat4();
+                temp = glm::scale(temp, glm::vec3(1.1f, 1.1f, 1.1f));
+                currentModel->transformLocalMatrix(temp);
+            }
+        break;
+        case GLUT_KEY_DOWN :
+            if(glutGetModifiers() & GLUT_ACTIVE_SHIFT && currentModel!= NULL){ // Shit -> rotation
+                glm::mat4 temp = glm::mat4();
+                temp = glm::rotate(temp, -1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
+            if(glutGetModifiers() & GLUT_ACTIVE_CTRL && currentModel!= NULL){ // Ctrl -> translate
+                glm::mat4 temp = glm::mat4();
+                temp = glm::translate(temp, glm::vec3(0.0f, 0.0f, -1.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
+            if(glutGetModifiers() & GLUT_ACTIVE_ALT && currentModel!= NULL){ // Alt -> scale
+                glm::mat4 temp = glm::mat4();
+                temp = glm::scale(temp, glm::vec3(0.9f, 0.9f, 0.9f));
+                currentModel->transformLocalMatrix(temp);
+            }
+        break;
+        case GLUT_KEY_LEFT :
+            if(glutGetModifiers() & GLUT_ACTIVE_SHIFT && currentModel!= NULL){ // Shit -> rotation
+                glm::mat4 temp = glm::mat4();
+                temp = glm::rotate(temp, 1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
+            if(glutGetModifiers() & GLUT_ACTIVE_CTRL && currentModel!= NULL){  // Ctrl -> translate
+                glm::mat4 temp = glm::mat4();
+                temp = glm::translate(temp, glm::vec3(1.0f, 0.0f, 0.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
+        break;
+        case GLUT_KEY_RIGHT :
+            if(glutGetModifiers() & GLUT_ACTIVE_SHIFT && currentModel!= NULL){ // Shit -> rotation
+                glm::mat4 temp = glm::mat4();
+                temp = glm::rotate(temp, -1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
+            if(glutGetModifiers() & GLUT_ACTIVE_CTRL && currentModel!= NULL){ // Ctrl -> rotation
+                glm::mat4 temp = glm::mat4();
+                temp = glm::translate(temp, glm::vec3(-1.0f, 0.0f, 0.0f));
+                currentModel->transformLocalMatrix(temp);
+            }
         break;
         default : break;
     }
@@ -414,22 +470,8 @@ void display( void )
 //    modelMatrix = glm::rotate(modelMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 //    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Create the local transformation matrix for first model
-    glm::mat4 modelMatrix;
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
-    modelMatrix = glm::rotate(modelMatrix, -1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(-8.0f, 1.0f, 0.0f));
-    modelsWithProgrammShader[0].setLocalTransformationMatrix(modelMatrix);
 
-    // Create the local transformation matrix for second model
-    modelMatrix = glm::mat4(1.0f);
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
-    modelMatrix = glm::rotate(modelMatrix, 1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(8.0f, 1.0f, 0.0f));
-    modelsWithGlassShader[0].setLocalTransformationMatrix(modelMatrix);
 
-    // Init global variable used to pick models on click
-    currentModel = NULL;
 
 //    const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
 //    if ( useMeshAnimation )
@@ -438,6 +480,11 @@ void display( void )
 //    }
 
 
+
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+    modelMatrix = glm::rotate(modelMatrix, 1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(8.0f, 1.0f, 0.0f));
     // Lighting
     // - normalMatrix
     normalMatrix = glm::transpose(glm::inverse(viewMatrix*modelMatrix));
@@ -749,6 +796,21 @@ int main( int argc, char** argv )
             // "Models/StarWars/test_obj/Arc170.obj"
     modelsWithProgrammShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
     modelsWithGlassShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
+    // Create the local transformation matrix for first model
+    glm::mat4 modelMatrix;
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+    modelMatrix = glm::rotate(modelMatrix, -1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(-8.0f, 1.0f, 0.0f));
+    modelsWithProgrammShader[0].setLocalTransformationMatrix(modelMatrix);
+
+    // Create the local transformation matrix for second model
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+    modelMatrix = glm::rotate(modelMatrix, 1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(8.0f, 1.0f, 0.0f));
+    modelsWithGlassShader[0].setLocalTransformationMatrix(modelMatrix);
+
+    // Init global variable used to pick models on click
     currentModel = NULL;
 
     bBoard = BillBoard(pathToTextures + "tree01.png");
