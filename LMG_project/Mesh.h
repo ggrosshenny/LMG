@@ -91,7 +91,7 @@ public:
      * @param indices indice of each vertex
      * @param textures textures used by the mesh
      */
-    Mesh(std::vector<Vertex> vertices,std::vector<GLuint> indices,  std::vector<Texture> textures);
+    Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices,  std::vector<Texture> textures);
 
 
 // Methods

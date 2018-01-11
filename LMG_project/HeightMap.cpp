@@ -122,23 +122,6 @@ void HeightMap::setupMap(int precision)
             vertex.position = glm::vec3(x, this->getHeightValue(x, z), z);
             vertex.textCoords = glm::vec2(x%this->colorTextWidth, z%this->colorTextHeight );
             this->vertices.push_back(vertex);
-
-//            // Push indices
-////            this->indices.push_back(vertexBotRightPosition);
-////            this->indices.push_back(vertexTopRightPosition);
-////            this->indices.push_back(vertexTopLeftPosition);
-
-////            this->indices.push_back(vertexBotLeftPosition);
-////            this->indices.push_back(vertexBotRightPosition);
-////            this->indices.push_back(vertexTopLeftPosition);
-
-//            this->indices.push_back(vertexTopLeftPosition);
-//            this->indices.push_back(vertexTopRightPosition);
-//            this->indices.push_back(vertexBotRightPosition);
-
-//            this->indices.push_back(vertexBotRightPosition);
-//            this->indices.push_back(vertexBotLeftPosition);
-//            this->indices.push_back(vertexTopLeftPosition);
         }
     }
 
@@ -169,22 +152,6 @@ void HeightMap::setupMap(int precision)
     }
 
     this->verticesNormalGeneration();
-
-//    std::cout << "HeightMap texture size : (" << this->hMapWidth << ", " << this->hMapHeight << ")" << std::endl;
-//    std::cout << "vertices size : " << this->vertices.size() << std::endl;
-//    std::cout << "indices size : " << this->indices.size() << std::endl;
-
-//    std::cout << "Vertex vector : " << std::endl;
-//    for(unsigned int i=0; i<this->vertices.size(); i++)
-//    {
-//        std::cout <<"\t(" << this->vertices[i].position.x << ", " << this->vertices[i].position.y << ", " << this->vertices[i].position.z << "), (" << this->vertices[i].textCoords.x << ", " << this->vertices[i].textCoords.y << ")" << std::endl;
-//    }
-//    std::cout << "indices vector : " << std::endl;
-//    for(unsigned int i=0; i<this->indices.size()-1; i++)
-//    {
-//        std::cout << this->indices[i] << ", " << std::endl;
-//    }
-//    std::cout << this->indices[this->indices.size()-1] << std::endl;
 
     // Declare VAO, VBO and EBO
     glGenVertexArrays(1, &this->VAO);

@@ -9,6 +9,8 @@
 #include "Camera.h"
 #include "SkyBox.h"
 #include "HeightMap.h"
+#include "BillBoard.h"
+#include "BillBoardCloud.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -46,6 +48,8 @@ Shader shaderProgram;
 Shader glassShader;
 Shader skyboxShader;
 Shader mapShader;
+Shader bBoardShader;
+Shader bBoardClourdShader;
 
 
 // Camera object
@@ -73,6 +77,15 @@ std::vector<Model3D> modelsWithGlassShader;
 Model3D* currentModel;
 int modelIdx = -1;
 bool isModelWithProgramShader = true;
+
+// BillBoards
+std::vector<std::string> bbCloudTextures = {
+    pathToTextures + "tree01.png",
+    pathToTextures + "tree01.png",
+    pathToTextures + "tree01.png"
+};
+BillBoard bBoard;
+BillBoardCloud bBcloud;
 
 
 // Mesh parameters
@@ -550,6 +563,7 @@ void display( void )
     // - refraction ratio
     glassShader.setFloat("refractionRatio", (1.0f/2.42f));
 
+
     //--------------------
     // Render scene
     //--------------------
@@ -576,11 +590,58 @@ void display( void )
         }
     }
 
+    // Draw billboards
+    //--------------------
+    // Activate billboard shader program
+    //--------------------
+    bBoardShader.use();
+    // Camera
+    // - view matrix
+    bBoardShader.setMat4("viewMatrix", viewMatrix);
+    // - projection matrix
+    bBoardShader.setMat4("projectionMatrix", projectionMatrix);
+    // - scene transformation matrix
+    bBoardShader.setMat4("sceneMatrix", SceneTransformationMatrix);
+    // - model matrix
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+    //modelMatrix = glm::rotate(modelMatrix, 1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+    bBoardShader.setMat4("modelMatrix", modelMatrix);
 
+    bBoard.draw(bBoardShader, "texture_diffuse");
+
+
+    // Draw billboardsCloud
+    //--------------------
+    // Activate billboard shader program
+    //--------------------
+    bBoardClourdShader.use();
+    // Camera
+    // - view matrix
+    bBoardClourdShader.setMat4("viewMatrix", viewMatrix);
+    // - projection matrix
+    bBoardClourdShader.setMat4("projectionMatrix", projectionMatrix);
+    // - scene transformation matrix
+    bBoardClourdShader.setMat4("sceneMatrix", SceneTransformationMatrix);
+    // - model matrix
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+    //modelMatrix = glm::rotate(modelMatrix, 1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+    bBoardClourdShader.setMat4("modelMatrix", modelMatrix);
+
+
+    bBcloud.draw(bBoardShader, "texture_diffuse");
+
+
+
+    // Draw skybox
 
     if(isSkyboxActive)
     {
         // Scale skybox
+        modelMatrix = glm::mat4(1.0f);
         modelMatrix = glm::scale(modelMatrix, glm::vec3(1000.0f, 1000.0f, 1000.0f));
         modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
 
@@ -671,6 +732,8 @@ int main( int argc, char** argv )
     glassShader = Shader(pathToShader+"glassShader.vert", pathToShader+"glassShader.frag");
     skyboxShader = Shader(pathToShader+"skyboxShader.vert", pathToShader+"skyboxShader.frag");
     mapShader = Shader(pathToShader+"mapShader.vert", pathToShader+"mapShader.frag");
+    bBoardShader = Shader(pathToShader+"billBoardShader.vert", pathToShader+"billBoardShader.frag");
+    bBoardClourdShader = Shader(pathToShader+"billBoardsCloud.vert", pathToShader+"billBoardsCloud.frag");
 
     // Create skybox object
     skybox = SkyBox(faces);
@@ -687,6 +750,11 @@ int main( int argc, char** argv )
     modelsWithProgrammShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
     modelsWithGlassShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
     currentModel = NULL;
+
+    bBoard = BillBoard(pathToTextures + "tree01.png");
+
+    bBcloud = BillBoardCloud(bbCloudTextures);
+
 
     // Init view & projection matrices
     viewMatrix = camera.getViewMatrix();
