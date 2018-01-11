@@ -70,6 +70,10 @@ bool isSkyboxActive = false;
 // Models
 std::vector<Model3D> modelsWithProgrammShader;
 std::vector<Model3D> modelsWithGlassShader;
+Model3D* currentModel;
+int modelIdx = -1;
+bool isModelWithProgramShader = true;
+
 
 // Mesh parameters
 glm::vec3 _meshColor;
@@ -84,6 +88,15 @@ glm::vec3 kd;
 float deltaTime = 0.0f;
 float currentFrameTime = 0.0f;
 float lastFrameTime = 0.0f;
+
+// Camera dependant matrices & vectors
+glm::mat4 viewMatrix;
+glm::mat4 projectionMatrix;
+glm::vec3 ray_origin;
+glm::vec3 ray_direction;
+
+// World 3D parameters matrix
+glm::mat4 SceneTransformationMatrix;
 
 /******************************************************************************
  ***************************** TYPE DEFINITION ********************************
@@ -152,9 +165,48 @@ bool checkExtensions()
 
 
 /******************************************************************************
- * Callback to retrieve user's inputs
+ * Retrieve mouse position in world on click
  ******************************************************************************/
 
+
+void currentModelUpdate(){
+
+    if(modelIdx == -1){
+        currentModel = &modelsWithProgrammShader[0];
+        modelIdx = 0;
+        isModelWithProgramShader = true;
+    }
+    else{
+        if(isModelWithProgramShader){
+            if(modelIdx == modelsWithProgrammShader.size()-1){
+                currentModel = &modelsWithGlassShader[0];
+                modelIdx = 0;
+                isModelWithProgramShader = false;
+            }
+            else{
+                modelIdx++;
+                currentModel = &modelsWithProgrammShader[modelIdx];
+            }
+        }
+        else{
+            if(modelIdx == modelsWithGlassShader.size()-1){
+                currentModel = &modelsWithProgrammShader[0];
+                modelIdx = 0;
+                isModelWithProgramShader = true;
+            }
+            else{
+                modelIdx++;
+                currentModel = &modelsWithGlassShader[modelIdx];
+            }
+        }
+    }
+    std::cout << " PROGRAMM : " << isModelWithProgramShader << " ID " << modelIdx << "@DD " << currentModel << std::endl;
+}
+
+
+/******************************************************************************
+ * Callback to retrieve user's inputs
+ ******************************************************************************/
 
 void mousePressedEvent(int button, int state, int x, int y)
 {
@@ -169,6 +221,14 @@ void mousePressedEvent(int button, int state, int x, int y)
                         leftMouseButtonDown = true;
                         lastMousePositionX = x;
                         lastMousePositionY = y;
+/*
+                        currentModelUpdate();
+
+                        if(currentModel != NULL){
+                            std::cout << "model found " << std::endl;
+                        }
+
+                        currentModel = NULL;*/
                     }
 
                 }
@@ -288,6 +348,19 @@ void keyPressedEvent(unsigned char key, int x, int y)
             camera.processKeyboard(RIGHT, deltaTime);
             break;
     }
+
+    glutPostRedisplay();
+}
+
+void specialKeyPressedEvent(int key, int x, int y){
+
+    switch(key)
+    {
+        case GLUT_KEY_PAGE_UP :
+            currentModelUpdate();
+        break;
+        default : break;
+    }
 }
 
 
@@ -318,16 +391,11 @@ void display( void )
     // Send uniforms to GPU
     //--------------------
 
+
+
     // Retrieve camera parameters
-    const glm::mat4 viewMatrix = camera.getViewMatrix();
-    const glm::mat4 projectionMatrix = glm::perspective( glm::radians(45.0f), static_cast<float>(SCR_WIDTH/SCR_HEIGHT), 0.1f, 100.0f );
-
-    // Retrieve 3D model / scene parameters
-    glm::mat4 SceneTransformationMatrix;
-    SceneTransformationMatrix = glm::scale(SceneTransformationMatrix, glm::vec3(0.5f, 0.5f, 0.5f));
-    SceneTransformationMatrix = glm::rotate(SceneTransformationMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    SceneTransformationMatrix = glm::translate(SceneTransformationMatrix, glm::vec3(0.0f, -12.5f, 10.0f));
-
+    viewMatrix = camera.getViewMatrix();
+    projectionMatrix = glm::perspective( glm::radians(45.0f), static_cast<float>(SCR_WIDTH/SCR_HEIGHT), 0.1f, 100.0f );
 
 //    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
 //    modelMatrix = glm::rotate(modelMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -346,6 +414,9 @@ void display( void )
     modelMatrix = glm::rotate(modelMatrix, 1.8f, glm::vec3(0.0f, 1.0f, 0.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(8.0f, 1.0f, 0.0f));
     modelsWithGlassShader[0].setLocalTransformationMatrix(modelMatrix);
+
+    // Init global variable used to pick models on click
+    currentModel = NULL;
 
 //    const bool useMeshAnimation = true; // TODO: use keyboard to activate/deactivate
 //    if ( useMeshAnimation )
@@ -517,7 +588,6 @@ void display( void )
         skybox.draw(skyboxShader, viewMatrix, projectionMatrix, modelMatrix);
     }
 
-
     // Reset GL state(s) (fixed pipeline)
     //glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
@@ -575,8 +645,11 @@ int main( int argc, char** argv )
     glutMotionFunc(mousePassiveEvent);
     // - get mouse inputs
     glutMouseFunc(mousePressedEvent);
+    // - get special keyboard input
+    glutSpecialFunc(specialKeyPressedEvent);
     // - get keyboard inputs
     glutKeyboardFunc(keyPressedEvent);
+
 
 
     // Initialize the GLEW library
@@ -613,8 +686,15 @@ int main( int argc, char** argv )
             // "Models/StarWars/test_obj/Arc170.obj"
     modelsWithProgrammShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
     modelsWithGlassShader.push_back(Model3D((pathToSrc + "Models/NanoSuit/nanosuit.obj")));
+    currentModel = NULL;
 
-
+    // Init view & projection matrices
+    viewMatrix = camera.getViewMatrix();
+    projectionMatrix = glm::perspective( glm::radians(45.0f), static_cast<float>(SCR_WIDTH/SCR_HEIGHT), 0.1f, 100.0f );
+    // Retrieve 3D model / scene parameters
+    SceneTransformationMatrix = glm::scale(SceneTransformationMatrix, glm::vec3(0.5f, 0.5f, 0.5f));
+    SceneTransformationMatrix = glm::rotate(SceneTransformationMatrix, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    SceneTransformationMatrix = glm::translate(SceneTransformationMatrix, glm::vec3(0.0f, -12.5f, 10.0f));
 
     // Enter the GLUT main event loop (waiting for events: keyboard, mouse, refresh screen, etc...)
     glutMainLoop();
