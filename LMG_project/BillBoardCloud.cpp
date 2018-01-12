@@ -24,6 +24,7 @@ BillBoardCloud::BillBoardCloud(std::vector<std::string> texturesPath)
     for(unsigned int i=0; i<texturesPath.size(); i++)
     {
         textureID = this->loadTexture(texturesPath[i], &textureHeight, &textureWidth);
+
         radius = textureWidth/2;
 
         // Top x
@@ -44,7 +45,7 @@ BillBoardCloud::BillBoardCloud(std::vector<std::string> texturesPath)
         // botRightVertex
         botRightVertex = glm::vec3(x, 0, z);
 
-        bBoard = BillBoard(textureID, topLeftVertex, topRightVertex, botRightVertex, botLeftVertex);
+        bBoard = BillBoard(textureID, textureWidth, textureHeight, topLeftVertex, topRightVertex, botRightVertex, botLeftVertex);
 
         billBoards.push_back(bBoard);
     }

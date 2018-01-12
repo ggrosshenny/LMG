@@ -26,7 +26,8 @@ void main( void )
 {
     // Compute fragment position in world space
     vec4 tempPos = projectionMatrix * viewMatrix * sceneMatrix * modelMatrix * vec4( position, 1.0 );
-    textureCoordinates = vec2(((imgWidth - position.x)/imgWidth), ((imgHeight - position.y)/imgHeight));
+    textureCoordinates = vec2(((position.x)/imgWidth) + (imgWidth/2), ((imgHeight - position.y)/imgHeight)) + imgHeight;
+
 
     // Send position to Clip-space
     gl_Position = tempPos;

@@ -19,10 +19,12 @@ BillBoard::BillBoard(std::string texturePath)
 }
 
 
-BillBoard::BillBoard(GLuint textureID, glm::vec3 topLeftVertex, glm::vec3 topRightVertex, glm::vec3 botRightVertex, glm::vec3 botLeftVertex)
+BillBoard::BillBoard(GLuint textureID, int textWidth, int textHeight, glm::vec3 topLeftVertex, glm::vec3 topRightVertex, glm::vec3 botRightVertex, glm::vec3 botLeftVertex)
 {
     // Store texture id in OpenGL
     this->textureID = textureID;
+    this->textureWidth = textWidth;
+    this->textureHeight = textHeight;
 
     // Store vertices position
     this->vertices.push_back(topLeftVertex);
@@ -95,10 +97,6 @@ void BillBoard::generateVerticesPosition()
     vertexPosition = glm::vec3(0, 0, 0);
     this->vertices.push_back(vertexPosition);
 
-    for(unsigned int i=0; i<this->vertices.size(); i++)
-    {
-        std::cout << "(" << this->vertices[i].x << ", " << this->vertices[i].y << ", " << this->vertices[i].z << ")" << std::endl;
-    }
 }
 
 
@@ -183,6 +181,7 @@ void BillBoard::draw(Shader shader, std::string UniformaNameInShader)
     glCheckError();
 
     // draw mesh
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glBindVertexArray(this->VAO);
@@ -190,6 +189,7 @@ void BillBoard::draw(Shader shader, std::string UniformaNameInShader)
     glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, (void*)0);
     glCheckError();
     glBindVertexArray(0);
+    glDisable(GL_BLEND);
 
     glActiveTexture(GL_TEXTURE0);
 }

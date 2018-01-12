@@ -15,5 +15,5 @@ void main( void )
   // Get texture color
   vec4 tempColor = texture(texture_diffuse, textureCoordinates);
   
-  fragmentColor = tempColor;
+  fragmentColor = tempColor.rgba;
 }

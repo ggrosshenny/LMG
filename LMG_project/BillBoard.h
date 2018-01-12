@@ -75,7 +75,7 @@ public:
      * @param botRightVertex
      * @param botLeftVertex
      */
-    BillBoard(GLuint textureID, glm::vec3 topLeftVertex, glm::vec3 topRightVertex, glm::vec3 botRightVertex, glm::vec3 botLeftVertex);
+    BillBoard(GLuint textureID, int textWidth, int textHeight, glm::vec3 topLeftVertex, glm::vec3 topRightVertex, glm::vec3 botRightVertex, glm::vec3 botLeftVertex);
 
 
 

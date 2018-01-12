@@ -81,7 +81,6 @@ bool isModelWithProgramShader = true;
 // BillBoards
 std::vector<std::string> bbCloudTextures = {
     pathToTextures + "tree01.png",
-    pathToTextures + "tree01.png",
     pathToTextures + "tree01.png"
 };
 BillBoard bBoard;
@@ -651,7 +650,7 @@ void display( void )
     bBoardShader.setMat4("sceneMatrix", SceneTransformationMatrix);
     // - model matrix
     modelMatrix = glm::mat4(1.0f);
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.015f, 0.015f, 0.015f));
     //modelMatrix = glm::rotate(modelMatrix, 1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
     bBoardShader.setMat4("modelMatrix", modelMatrix);
@@ -673,7 +672,7 @@ void display( void )
     bBoardClourdShader.setMat4("sceneMatrix", SceneTransformationMatrix);
     // - model matrix
     modelMatrix = glm::mat4(1.0f);
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05f, 0.05f, 0.05f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.015f, 0.015f, 0.015f));
     //modelMatrix = glm::rotate(modelMatrix, 1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
     bBoardClourdShader.setMat4("modelMatrix", modelMatrix);
